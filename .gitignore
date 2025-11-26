@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Données locales
+data/campaign.db
+data/photos/
+data/pdf/
+data/exports/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
