@@ -1,0 +1,661 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_new %}Nouvel Élève{% else %}{{ student.nom }} {{ student.prenom }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="bi bi-person-circle me-2"></i>
+                        {% if is_new %}
+                            Nouvel Élève
+                        {% else %}
+                            {{ student.nom }} {{ student.prenom }}
+                        {% endif %}
+                    </h2>
+                </div>
+                {% if not is_new %}
+                <div>
+                    <span class="badge bg-primary fs-5">
+                        {{ student.status }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{% if is_new %}/students/new{% else %}/students/edit/{{ student.id }}{% endif %}">
+
+        <!-- Ligne 1 : École & informations élève (pleine largeur) -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Informations de base -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-building me-2"></i>École</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Ville</label>
+                                <input type="text" class="form-control" name="ville" value="{{ student.ville if student.ville else '' }}" readonly required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">École</label>
+                                <input type="text" class="form-control" name="ecole" value="{{ student.ecole if student.ecole else '' }}" readonly required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Classe / Niveau</label>
+                                <select class="form-select" name="classe" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    <option value="Préscolaire" {% if student and student.classe == 'Préscolaire' %}selected{% endif %}>Préscolaire</option>
+                                    <option value="1" {% if student and student.classe == '1' %}selected{% endif %}>1</option>
+                                    <option value="2" {% if student and student.classe == '2' %}selected{% endif %}>2</option>
+                                    <option value="3" {% if student and student.classe == '3' %}selected{% endif %}>3</option>
+                                    <option value="4" {% if student and student.classe == '4' %}selected{% endif %}>4</option>
+                                    <option value="5" {% if student and student.classe == '5' %}selected{% endif %}>5</option>
+                                    <option value="6" {% if student and student.classe == '6' %}selected{% endif %}>6</option>
+                                    <option value="Collège" {% if student and student.classe == 'Collège' %}selected{% endif %}>Collège</option>
+                                    <option value="Lycée" {% if student and student.classe == 'Lycée' %}selected{% endif %}>Lycée</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="text-muted mb-3"><i class="bi bi-person me-2"></i>Informations Élève</h6>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control" name="nom" value="{{ student.nom if student.nom else '' }}" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Prénom</label>
+                                <input type="text" class="form-control" name="prenom" value="{{ student.prenom if student.prenom else '' }}" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Âge</label>
+                                <input type="number" class="form-control" name="age" min="3" max="99" value="{{ student.age if student.age is not none else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Ligne 2 : Bloc clinique complet (Acuité, Auto-Rx, Prescription, Écart pupillaire, Photo) -->
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Acuité Visuelle -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Acuité Visuelle Pré-dépistage</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">OD (Œil Droit)</label>
+                                <select class="form-select" name="acuite_od">
+                                    <option value="">--</option>
+                                    {% for val in range(0, 13) %}
+                                        <option value="{{ val }}" {% if student and student.acuite_od == val %}selected{% endif %}>{{ val }}/10</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">OG (Œil Gauche)</label>
+                                <select class="form-select" name="acuite_og">
+                                    <option value="">--</option>
+                                    {% for val in range(0, 13) %}
+                                        <option value="{{ val }}" {% if student and student.acuite_og == val %}selected{% endif %}>{{ val }}/10</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <!-- Lecture auto-réfractomètre -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bullseye me-2"></i>
+                            Lecture auto-réfractomètre (pré-prescription)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            Saisir ici les valeurs brutes données par l’autoréfractomètre.
+                            L’application proposera ensuite une correction de départ
+                            que l’opticien / l’ophtalmologue pourra ajuster.
+                        </p>
+
+                        <!-- OD -->
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-md-12">
+                                <strong>OD</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Sphère (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-sph-od-desktop">
+                                    <option value="">--</option>
+                                    {% for val in range(-2000, 2025, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Cylindre (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-cyl-od-desktop">
+                                    <option value="">--</option>
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Axe (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-axe-od-desktop">
+                                    <option value="">--</option>
+                                    {% for angle in range(0, 181, 5) %}
+                                        <option value="{{ angle }}">{{ angle }}°</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                        <!-- OG -->
+                        <!-- OG -->
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-12">
+                                <strong>OG</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Sphère (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-sph-og-desktop">
+                                    <option value="">--</option>
+                                    {% for val in range(-2000, 2025, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Cylindre (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-cyl-og-desktop">
+                                    <option value="">--</option>
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small">Axe (auto)</label>
+                                <select class="form-select form-select-sm" id="auto-axe-og-desktop">
+                                    <option value="">--</option>
+                                    {% for angle in range(0, 181, 5) %}
+                                        <option value="{{ angle }}">{{ angle }}°</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button"
+                                id="btn-auto-rx-desktop"
+                                class="btn btn-outline-primary btn-sm w-100 mb-2">
+                            <i class="bi bi-magic me-1"></i>
+                            Proposer une correction à partir de l’auto-réfractomètre
+                        </button>
+
+                        <div id="auto-rx-info-desktop" class="alert alert-secondary small d-none mb-0"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <!-- Prescription OD -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-eyeglasses me-2"></i>Prescription OD</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Sphère</label>
+                                <select class="form-select" name="sph_od">
+                                    <option value="">--</option>
+                                    {% for val in range(-2000, 2025, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.sph_od and (student.sph_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cylindre</label>
+                                <select class="form-select" name="cyl_od">
+                                    <option value="">--</option>
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.cyl_od and (student.cyl_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Axe</label>
+                                <select class="form-select" name="axe_od">
+                                    <option value="">--</option>
+                                    {% for angle in range(0, 181, 5) %}
+                                        <option value="{{ angle }}" {% if student and student.axe_od == angle %}selected{% endif %}>{{ angle }}°</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Prescription OG -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-eyeglasses me-2"></i>Prescription OG</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Sphère</label>
+                                <select class="form-select" name="sph_og">
+                                    <option value="">--</option>
+                                    {% for val in range(-2000, 2025, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.sph_og and (student.sph_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cylindre</label>
+                                <select class="form-select" name="cyl_og">
+                                    <option value="">--</option>
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.cyl_og and (student.cyl_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Axe</label>
+                                <select class="form-select" name="axe_og">
+                                    <option value="">--</option>
+                                    {% for angle in range(0, 181, 5) %}
+                                        <option value="{{ angle }}" {% if student and student.axe_og == angle %}selected{% endif %}>{{ angle }}°</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Ligne 3 : Écart pupillaire vs Photo + Prise en charge -->
+        <div class="row">
+            <div class="col-lg-6">
+
+                <!-- Écart Pupillaire -->
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-rulers me-2"></i>Écart Pupillaire</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">EP OD</label>
+                                <select class="form-select" name="ep_pupillometre_od">
+                                    <option value="">--</option>
+                                    {% for val in range(50, 71) %}
+                                        {% set formatted_val = (val / 2)|round(1) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.ep_pupillometre_od and (student.ep_pupillometre_od|round(1)) == formatted_val %}selected{% endif %}>{{ formatted_val }} mm</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">EP OG</label>
+                                <select class="form-select" name="ep_pupillometre_og">
+                                    <option value="">--</option>
+                                    {% for val in range(50, 71) %}
+                                        {% set formatted_val = (val / 2)|round(1) %}
+                                        <option value="{{ formatted_val }}" {% if student and student.ep_pupillometre_og and (student.ep_pupillometre_og|round(1)) == formatted_val %}selected{% endif %}>{{ formatted_val }} mm</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="col-lg-6">
+
+                <!-- Photo Monture -->
+                {% if not is_new %}
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Photo Monture</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if student.photo_monture %}
+                        <div class="text-center">
+                            <img src="/{{ student.photo_monture }}?t={{ range(1, 10000)|random }}" 
+                                 class="img-fluid rounded border border-3" 
+                                 style="max-height: 300px;">
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning text-center mb-0">
+                            <i class="bi bi-camera-fill fs-1"></i>
+                            <p class="mb-0 mt-2">Aucune photo</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+
+            </div>
+        </div>
+
+        <!-- Ligne 3 : Prise en charge (pleine largeur) -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Prise en Charge -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Prise en Charge</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if student and not is_new %}
+                            {% set prises = student.prise_en_charge.split(',') if student.prise_en_charge else [] %}
+                        {% else %}
+                            {% set prises = [] %}
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="lunettes" id="pec1" {% if 'lunettes' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec1">Lunettes</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="medicament" id="pec2" {% if 'medicament' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec2">Médicament</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="refere_oph" id="pec3" {% if 'refere_oph' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec3">Référé Ophtalmo</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="refere_orthoptiste" id="pec4" {% if 'refere_orthoptiste' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec4">Référé Orthoptiste</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="chirurgie" id="pec5" {% if 'chirurgie' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec5">Chirurgie</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="prise_en_charge" value="ras" id="pec6" {% if 'ras' in prises %}checked{% endif %}>
+                                    <label class="form-check-label" for="pec6">RAS</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Ligne 4 : Observations + boutons (pleine largeur) -->
+        <div class="row">
+            <div class="col-12">
+            </div>
+        </div>
+
+        <!-- Ligne 4 : Observations + boutons (pleine largeur) -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Observations -->
+                <div class="card mb-3">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="bi bi-chat-text me-2"></i>Observations</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" name="observations" rows="4">{% if student and student.observations %}{{ student.observations }}{% endif %}</textarea>
+                    </div>
+                </div>
+
+                <!-- ⭐ BOUTONS ACTION (un seul bloc, bien visible) -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/students" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle me-2"></i>Annuler
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-save me-2"></i>{% if is_new %}Créer{% else %}Enregistrer{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Script RAS Exclusif Bidirectionnel -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxRas = document.getElementById('pec6');
+    const autresCheckboxes = [
+        document.getElementById('pec1'),
+        document.getElementById('pec2'),
+        document.getElementById('pec3'),
+        document.getElementById('pec4'),
+        document.getElementById('pec5')
+    ];
+
+    if (checkboxRas) {
+        checkboxRas.addEventListener('change', function() {
+            if (this.checked) {
+                autresCheckboxes.forEach(cb => {
+                    if (cb) {
+                        cb.checked = false;
+                        cb.disabled = true;
+                    }
+                });
+            } else {
+                autresCheckboxes.forEach(cb => {
+                    if (cb) cb.disabled = false;
+                });
+            }
+        });
+    }
+
+    autresCheckboxes.forEach(cb => {
+        if (cb) {
+            cb.addEventListener('change', function() {
+                const auMoinsUneCochee = autresCheckboxes.some(checkbox => 
+                    checkbox && checkbox.checked
+                );
+
+                if (auMoinsUneCochee) {
+                    if (checkboxRas) {
+                        checkboxRas.checked = false;
+                        checkboxRas.disabled = true;
+                    }
+                } else {
+                    if (checkboxRas) checkboxRas.disabled = false;
+                }
+            });
+        }
+    });
+
+    function verifierEtatInitial() {
+        if (checkboxRas && checkboxRas.checked) {
+            autresCheckboxes.forEach(cb => {
+                if (cb) cb.disabled = true;
+            });
+        } else {
+            const auMoinsUneCochee = autresCheckboxes.some(cb => 
+                cb && cb.checked
+            );
+            if (auMoinsUneCochee && checkboxRas) {
+                checkboxRas.disabled = true;
+            }
+        }
+    }
+
+
+    // === V1 Auto-réfractomètre → pré-prescription (desktop) ===
+    function parseFloatSafeDesktop(value) {
+        if (value === null || value === undefined) return null;
+        value = ('' + value).replace(',', '.').trim();
+        if (!value) return null;
+        const n = parseFloat(value);
+        return isNaN(n) ? null : n;
+    }
+
+    function round025Desktop(x) {
+        return Math.round(x * 4) / 4;
+    }
+
+    function suggestFromAutoDesktop(s, c, axis) {
+        if (s === null && c === null) {
+            return null;
+        }
+        s = s || 0;
+        c = c || 0;
+        let a = axis;
+
+        // Cylindre faible → équivalent sphérique
+        if (Math.abs(c) < 0.5) {
+            s = s + c / 2;
+            c = 0;
+            a = null;
+        }
+
+        s = round025Desktop(s);
+        c = round025Desktop(c);
+
+        if (a !== null && a !== undefined) {
+            a = Math.round(a / 5) * 5;
+            if (a < 0) a = 0;
+            if (a > 180) a = 180;
+        }
+
+        return { sph: s, cyl: c, axis: a };
+    }
+
+    function setSelectValueDesktop(selectName, value) {
+        if (value === null || value === undefined) return;
+        const el = document.querySelector('select[name="' + selectName + '"]');
+        if (!el) return;
+
+        let bestValue = null;
+        let bestDiff = Infinity;
+
+        Array.from(el.options).forEach(function(opt) {
+            if (!opt.value) return; // ignorer les options vides "--"
+            const v = parseFloat(String(opt.value).replace(',', '.'));
+            if (isNaN(v)) return;
+            const diff = Math.abs(v - value);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestValue = opt.value;
+            }
+        });
+
+        if (bestValue !== null) {
+            el.value = bestValue;
+        } else {
+            console.warn('Valeur non trouvée dans le select (desktop)', selectName, value);
+        }
+    }
+
+    const btnAutoRxDesktop = document.getElementById('btn-auto-rx-desktop');
+    const infoBoxDesktop = document.getElementById('auto-rx-info-desktop');
+
+    if (btnAutoRxDesktop) {
+        btnAutoRxDesktop.addEventListener('click', function () {
+            const sphOd = parseFloatSafeDesktop(document.getElementById('auto-sph-od-desktop')?.value);
+            const cylOd = parseFloatSafeDesktop(document.getElementById('auto-cyl-od-desktop')?.value);
+            const axeOd = parseFloatSafeDesktop(document.getElementById('auto-axe-od-desktop')?.value);
+
+            const sphOg = parseFloatSafeDesktop(document.getElementById('auto-sph-og-desktop')?.value);
+            const cylOg = parseFloatSafeDesktop(document.getElementById('auto-cyl-og-desktop')?.value);
+            const axeOg = parseFloatSafeDesktop(document.getElementById('auto-axe-og-desktop')?.value);
+
+            if (sphOd === null && cylOd === null &&
+                sphOg === null && cylOg === null) {
+                alert("Merci de saisir au moins un œil (OD ou OG) avant de proposer une correction.");
+                return;
+            }
+
+            const suggOd = suggestFromAutoDesktop(sphOd, cylOd, axeOd);
+            const suggOg = suggestFromAutoDesktop(sphOg, cylOg, axeOg);
+
+            // Appliquer sur les champs de prescription existants
+            if (suggOd) {
+                setSelectValueDesktop('sph_od', suggOd.sph);
+                setSelectValueDesktop('cyl_od', suggOd.cyl);
+                if (suggOd.axis !== null && suggOd.axis !== undefined) {
+                    const axeSelectOd = document.querySelector('select[name="axe_od"]');
+                    if (axeSelectOd) axeSelectOd.value = String(Math.round(suggOd.axis));
+                }
+            }
+
+            if (suggOg) {
+                setSelectValueDesktop('sph_og', suggOg.sph);
+                setSelectValueDesktop('cyl_og', suggOg.cyl);
+                if (suggOg.axis !== null && suggOg.axis !== undefined) {
+                    const axeSelectOg = document.querySelector('select[name="axe_og"]');
+                    if (axeSelectOg) axeSelectOg.value = String(Math.round(suggOg.axis));
+                }
+            }
+
+            if (infoBoxDesktop) {
+                let txt = '<strong>Proposition appliquée :</strong><br>';
+                if (suggOd) {
+                    txt += 'OD : ' + suggOd.sph.toFixed(2);
+                    if (Math.abs(suggOd.cyl) >= 0.25) {
+                        txt += ' (' + suggOd.cyl.toFixed(2) + ')';
+                        if (suggOd.axis !== null && suggOd.axis !== undefined) {
+                            txt += ' @ ' + Math.round(suggOd.axis) + '°';
+                        }
+                    }
+                    txt += '<br>';
+                }
+                if (suggOg) {
+                    txt += 'OG : ' + suggOg.sph.toFixed(2);
+                    if (Math.abs(suggOg.cyl) >= 0.25) {
+                        txt += ' (' + suggOg.cyl.toFixed(2) + ')';
+                        if (suggOg.axis !== null && suggOg.axis !== undefined) {
+                            txt += ' @ ' + Math.round(suggOg.axis) + '°';
+                        }
+                    }
+                    txt += '<br>';
+                }
+                txt += '<span class="text-muted">À vérifier et ajuster par le professionnel de santé.</span>';
+                infoBoxDesktop.innerHTML = txt;
+                infoBoxDesktop.classList.remove('d-none');
+            }
+        });
+    }
+    verifierEtatInitial();
+});
+</script>
+{% endblock %}

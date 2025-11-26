@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion École Active{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2><i class="bi bi-building me-2"></i>Gestion de l'École Active</h2>
+    <p class="text-muted">Définissez l'école en cours pour pré-remplir automatiquement les formulaires</p>
+</div>
+
+<!-- École Active Actuelle -->
+<div class="row">
+    <div class="col-lg-8">
+        {% if session_active %}
+        <div class="card shadow-sm border-success mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>École Active</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="text-success mb-3">{{ session_active.ecole }}</h4>
+                        <p class="mb-2"><i class="bi bi-geo-alt-fill me-2"></i><strong>Ville :</strong> {{ session_active.ville }}</p>
+                        <p class="mb-2"><i class="bi bi-calendar-check me-2"></i><strong>Depuis :</strong> {{ session_active.date_debut.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-warning btn-lg" onclick="cloturerEcole()">
+                            <i class="bi bi-x-circle me-2"></i>Clôturer cette École
+                        </button>
+                        <p class="small text-muted mt-2">Les formulaires continueront à se pré-remplir jusqu'à la clôture</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Aucune école active.</strong> Sélectionnez une école ci-dessous pour commencer.
+        </div>
+        {% endif %}
+
+        <!-- Sélectionner une École Existante -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Sélectionner une École Existante</h5>
+            </div>
+            <div class="card-body">
+                {% if ecoles %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ville</th>
+                                <th>École</th>
+                                <th>Nb Élèves</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ville, ecole in ecoles %}
+                            <tr>
+                                <td>{{ ville }}</td>
+                                <td><strong>{{ ecole }}</strong></td>
+                                <td>
+                                    {% set count = namespace(value=0) %}
+                                    {% for student in namespace.students %}
+                                        {% if student.ville == ville and student.ecole == ecole %}
+                                            {% set count.value = count.value + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="badge bg-info">{{ count.value or '-' }}</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-success" onclick="activerEcole('{{ ville }}', '{{ ecole }}')">
+                                        <i class="bi bi-check-circle me-1"></i>Activer
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">Aucune école enregistrée. Créez-en une ci-dessous.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Créer une Nouvelle École -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Créer une Nouvelle École</h5>
+            </div>
+            <div class="card-body">
+                <form id="form-new-ecole" onsubmit="return creerNouvelleEcole(event)">
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label">Ville <span class="text-danger">*</span></label>
+                            <input type="text" id="new-ville" class="form-control" placeholder="Ex: Casablanca" required>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label">Nom de l'École <span class="text-danger">*</span></label>
+                            <input type="text" id="new-ecole" class="form-control" placeholder="Ex: École Primaire Al Amal" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-info w-100">
+                                <i class="bi bi-plus-circle me-1"></i>Créer & Activer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique</h5>
+            </div>
+            <div class="card-body">
+                {% if historique %}
+                <div class="list-group">
+                    {% for session in historique %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ session.ecole }}</h6>
+                                <small class="text-muted">{{ session.ville }}</small>
+                            </div>
+                            {% if session.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Clôturée</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-calendar me-1"></i>{{ session.date_debut.strftime('%d/%m/%Y') }}
+                            {% if session.date_cloture %}
+                                - {{ session.date_cloture.strftime('%d/%m/%Y') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">Aucun historique</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function activerEcole(ville, ecole) {
+    if (!confirm(`Activer l'école "${ecole}" à ${ville} ?`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('ville', ville);
+    formData.append('ecole', ecole);
+
+    fetch('/session/ecole/set', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (window.LocalCampaign) {
+                LocalCampaign.showAlert(`École "${ecole}" activée avec succès !`, 'success');
+            }
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Erreur : ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur : ' + error);
+    });
+}
+
+function cloturerEcole() {
+    if (!confirm('Êtes-vous sûr de vouloir clôturer cette école ?\n\nVous pourrez la réactiver plus tard si nécessaire.')) {
+        return;
+    }
+
+    fetch('/session/ecole/cloturer', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (window.LocalCampaign) {
+                LocalCampaign.showAlert('École clôturée avec succès !', 'success');
+            }
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Erreur : ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur : ' + error);
+    });
+}
+
+function creerNouvelleEcole(event) {
+    event.preventDefault();
+
+    const ville = document.getElementById('new-ville').value;
+    const ecole = document.getElementById('new-ecole').value;
+
+    const formData = new FormData();
+    formData.append('ville', ville);
+    formData.append('ecole', ecole);
+
+    fetch('/session/ecole/create', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (window.LocalCampaign) {
+                LocalCampaign.showAlert(data.message, 'success');
+            }
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Erreur : ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur : ' + error);
+    });
+
+    return false;
+}
+</script>
+{% endblock %}

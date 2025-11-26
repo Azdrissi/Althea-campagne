@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}{% if student %}Modifier{% else %}Nouvel{% endif %} Élève{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2>
+        <i class="bi bi-person-{{ 'edit' if student else 'plus' }} me-2"></i>
+        {% if student %}Modifier l'Élève #{{ student.id }}{% else %}Nouvel Élève{% endif %}
+    </h2>
+</div>
+
+<form id="student-form" onsubmit="return handleSubmit(event)">
+    <div class="row">
+        <!-- Colonne gauche -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations Administratives
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Ville <span class="text-danger">*</span></label>
+                        <input type="text" name="ville" class="form-control" value="{{ student.ville if student else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">École <span class="text-danger">*</span></label>
+                        <input type="text" name="ecole" class="form-control" value="{{ student.ecole if student else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Classe <span class="text-danger">*</span></label>
+                        <input type="text" name="classe" class="form-control" value="{{ student.classe if student else '' }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" class="form-control" value="{{ student.nom if student else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" name="prenom" class="form-control" value="{{ student.prenom if student else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Âge</label>
+                        <input type="number" name="age" class="form-control" min="3" max="18" value="{{ student.age if student else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Acuité Visuelle</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Acuité OD (Œil Droit)</label>
+                            <input type="number" name="acuite_od" class="form-control" step="0.1" min="0" max="12" 
+                                   value="{{ student.acuite_od if student and student.acuite_od else '' }}" placeholder="Ex: 10">
+                            <small class="text-muted">Sur 10 ou 12</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Acuité OG (Œil Gauche)</label>
+                            <input type="number" name="acuite_og" class="form-control" step="0.1" min="0" max="12" 
+                                   value="{{ student.acuite_og if student and student.acuite_og else '' }}" placeholder="Ex: 10">
+                            <small class="text-muted">Sur 10 ou 12</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-eyeglasses me-2"></i>Prescription</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Œil Droit (OD)</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Sphère</label>
+                            <input type="number" name="sph_od" class="form-control" step="0.25" 
+                                   value="{{ student.sph_od if student and student.sph_od is not none else '' }}" placeholder="Ex: -2.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cylindre</label>
+                            <input type="number" name="cyl_od" class="form-control" step="0.25" 
+                                   value="{{ student.cyl_od if student and student.cyl_od is not none else '' }}" placeholder="Ex: -0.75">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Axe</label>
+                            <input type="number" name="axe_od" class="form-control" min="0" max="180" 
+                                   value="{{ student.axe_od if student and student.axe_od is not none else '' }}" placeholder="Ex: 90">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="text-muted">Œil Gauche (OG)</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Sphère</label>
+                            <input type="number" name="sph_og" class="form-control" step="0.25" 
+                                   value="{{ student.sph_og if student and student.sph_og is not none else '' }}" placeholder="Ex: -2.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cylindre</label>
+                            <input type="number" name="cyl_og" class="form-control" step="0.25" 
+                                   value="{{ student.cyl_og if student and student.cyl_og is not none else '' }}" placeholder="Ex: -0.75">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Axe</label>
+                            <input type="number" name="axe_og" class="form-control" min="0" max="180" 
+                                   value="{{ student.axe_og if student and student.axe_og is not none else '' }}" placeholder="Ex: 90">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="text-muted"><i class="bi bi-rulers me-2"></i>Écart Pupillaire</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">EP Réfractomètre</label>
+                            <input type="number" name="ecart_pupillaire" class="form-control" step="0.5" 
+                                   value="{{ student.ecart_pupillaire if student and student.ecart_pupillaire else '' }}" placeholder="Ex: 62">
+                            <small class="text-muted">mm</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">EP Pupillomètre OD</label>
+                            <input type="number" name="ep_pupillometre_od" class="form-control" step="0.5" 
+                                   value="{{ student.ep_pupillometre_od if student and student.ep_pupillometre_od else '' }}" placeholder="Ex: 31">
+                            <small class="text-muted">mm</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">EP Pupillomètre OG</label>
+                            <input type="number" name="ep_pupillometre_og" class="form-control" step="0.5" 
+                                   value="{{ student.ep_pupillometre_og if student and student.ep_pupillometre_og else '' }}" placeholder="Ex: 31">
+                            <small class="text-muted">mm</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Autoréfractomètre</label>
+                        <textarea name="autorefractometre" class="form-control" rows="2" 
+                                  placeholder="Données autoréfractomètre...">{{ student.autorefractometre if student else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>Prise en Charge & Observations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Type(s) de Prise en Charge</label>
+                        <p class="small text-muted mb-2"><i class="bi bi-info-circle me-1"></i>Cochez une ou plusieurs options</p>
+
+                        {% set prises = student.get_prises_en_charge_list() if student else [] %}
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="lunettes" id="pec-lunettes"
+                                   {% if 'lunettes' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-lunettes">
+                                <i class="bi bi-eyeglasses me-1"></i>Lunettes
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="medicament" id="pec-medicament"
+                                   {% if 'medicament' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-medicament">
+                                <i class="bi bi-capsule me-1"></i>Médicament
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="refere_oph" id="pec-oph"
+                                   {% if 'refere_oph' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-oph">
+                                <i class="bi bi-hospital me-1"></i>Référé Ophtalmologue
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="refere_orthoptiste" id="pec-ortho"
+                                   {% if 'refere_orthoptiste' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-ortho">
+                                <i class="bi bi-eye-fill me-1"></i>Référé Orthoptiste
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="chirurgie" id="pec-chirurgie"
+                                   {% if 'chirurgie' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-chirurgie">
+                                <i class="bi bi-bandaid me-1"></i>Chirurgie
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="prise_en_charge" value="ras" id="pec-ras"
+                                   {% if 'ras' in prises %}checked{% endif %}>
+                            <label class="form-check-label" for="pec-ras">
+                                <i class="bi bi-check-circle me-1"></i>RAS (Rien à signaler)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observations</label>
+                        <textarea name="observations" class="form-control" rows="4" 
+                                  placeholder="Observations médicales, notes particulières...">{{ student.observations if student else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="/students" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Retour
+                    </a>
+                </div>
+                <div>
+                    {% if student %}
+                        <button type="button" onclick="submitForm(false)" class="btn btn-primary me-2">
+                            <i class="bi bi-save me-1"></i>Enregistrer
+                        </button>
+                        <button type="button" onclick="submitForm(true)" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>Valider et Clôturer
+                        </button>
+                    {% else %}
+                        <button type="button" onclick="createStudent()" class="btn btn-success">
+                            <i class="bi bi-plus-circle me-1"></i>Créer
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if student %}
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Photos</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <h6>Portrait</h6>
+                <button type="button" class="btn btn-outline-primary" onclick="capturePhoto('portrait', {{ student.id }})">
+                    <i class="bi bi-camera"></i> Capturer
+                </button>
+                {% if student.photo_portrait %}
+                    <div class="mt-2">
+                        <img src="/{{ student.photo_portrait }}" class="img-thumbnail" style="max-width: 200px;">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-center">
+                <h6>Monture</h6>
+                <button type="button" class="btn btn-outline-primary" onclick="capturePhoto('monture', {{ student.id }})">
+                    <i class="bi bi-camera"></i> Capturer
+                </button>
+                {% if student.photo_monture %}
+                    <div class="mt-2">
+                        <img src="/{{ student.photo_monture }}" class="img-thumbnail" style="max-width: 200px;">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-center">
+                <h6>Clinique</h6>
+                <button type="button" class="btn btn-outline-primary" onclick="capturePhoto('clinique', {{ student.id }})">
+                    <i class="bi bi-camera"></i> Capturer
+                </button>
+                {% if student.photo_clinique %}
+                    <div class="mt-2">
+                        <img src="/{{ student.photo_clinique }}" class="img-thumbnail" style="max-width: 200px;">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script>
+// AUTO-REMPLISSAGE ÉCOLE ACTIVE
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/session/ecole/active')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.ville && data.ecole) {
+                const villeInput = document.querySelector('input[name="ville"]');
+                const ecoleInput = document.querySelector('input[name="ecole"]');
+
+                if (villeInput && !villeInput.value) {
+                    villeInput.value = data.ville;
+                }
+
+                if (ecoleInput && !ecoleInput.value) {
+                    ecoleInput.value = data.ecole;
+                }
+
+                const formHeader = document.querySelector('.card-header.bg-primary');
+                if (formHeader && villeInput.value) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success ms-2';
+                    badge.innerHTML = '<i class="bi bi-building me-1"></i>École Active: ' + data.ecole;
+                    formHeader.querySelector('h5').appendChild(badge);
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Aucune école active définie');
+        });
+});
+
+// FONCTIONS DE FORMULAIRE
+function createStudent() {
+    const form = document.getElementById('student-form');
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    fetch('/students/create', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (window.LocalCampaign) {
+                LocalCampaign.showAlert('Élève créé avec succès !', 'success');
+            }
+            setTimeout(() => {
+                window.location.href = '/students';
+            }, 500);
+        } else {
+            alert('Erreur : ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la création : ' + error);
+    });
+}
+
+function handleSubmit(event) {
+    event.preventDefault();
+    {% if student %}
+        submitForm(false);
+    {% else %}
+        createStudent();
+    {% endif %}
+    return false;
+}
+
+function submitForm(cloturer) {
+    const form = document.getElementById('student-form');
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    if (cloturer) {
+        formData.append('cloturer', 'true');
+    }
+
+    const studentId = {{ student.id if student else 'null' }};
+    const url = studentId ? `/students/update/${studentId}` : '/students/create';
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const message = cloturer ? 'Élève clôturé avec succès !' : 'Enregistrement réussi !';
+            if (window.LocalCampaign) {
+                LocalCampaign.showAlert(message, 'success');
+            }
+            setTimeout(() => {
+                window.location.href = '/students';
+            }, 500);
+        } else {
+            alert('Erreur : ' + (data.error || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'enregistrement : ' + error);
+    });
+}
+</script>
+{% endblock %}

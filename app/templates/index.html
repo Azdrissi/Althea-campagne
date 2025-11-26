@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Fondation Althea{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-md-12 text-center">
+            <h1><i class="bi bi-eye me-3"></i>Application Campagne Althea</h1>
+            <p class="lead text-muted">Dépistage ophtalmologique - Version 11</p>
+        </div>
+    </div>
+
+    {% if session_active %}
+    <!-- École active -->
+    <div class="alert alert-success border-3 border-success shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="alert-heading">
+                    <i class="bi bi-building-check me-2"></i>
+                    École active : {{ session_active.ecole }}
+                </h4>
+                <p class="mb-0">
+                    <strong>Ville :</strong> {{ session_active.ville }}<br>
+                    <strong>Démarrée le :</strong> {{ session_active.date_debut }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <form method="POST" action="/session/close" onsubmit="return confirm('Êtes-vous sûr de vouloir clôturer cette école ?');">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-x-circle me-2"></i>Clôturer l'école
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-person-plus text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Ajouter un élève</h5>
+                    <p class="text-muted">Saisir manuellement un nouvel élève</p>
+                    <a href="/students/new" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Nouveau
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-people text-info" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Liste des élèves</h5>
+                    <p class="text-muted">Consulter et modifier les fiches</p>
+                    <a href="/students" class="btn btn-info">
+                        <i class="bi bi-list me-2"></i>Voir la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-bar-chart text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Statistiques</h5>
+                    <p class="text-muted">Voir les résultats de l'école</p>
+                    <a href="/statistics" class="btn btn-success">
+                        <i class="bi bi-graph-up me-2"></i>Statistiques
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Démarrer une nouvelle école -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-building me-2"></i>Démarrer une nouvelle école</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/session/start">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ville *</label>
+                        <input type="text" class="form-control form-control-lg" name="ville" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">École *</label>
+                        <input type="text" class="form-control form-control-lg" name="ecole" required>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-play-circle me-2"></i>Démarrer la campagne
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ou importer une pré-liste -->
+    <div class="card mt-4 shadow">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0"><i class="bi bi-upload me-2"></i>Ou importer une pré-liste Excel</h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="text-muted">
+                Importez un fichier Excel contenant les élèves pré-listés avec Ville, École, Classe, Nom, Prénom, Âge
+            </p>
+            <a href="/imports" class="btn btn-info btn-lg">
+                <i class="bi bi-file-earmark-excel me-2"></i>Importer Excel
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

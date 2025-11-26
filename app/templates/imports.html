@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Import Pré-dépistage - Fondation Althea{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="bi bi-file-earmark-excel me-2"></i>Import Pré-dépistage Excel</h2>
+            <p class="text-muted">Importez le tableau de pré-dépistage fourni par l'école</p>
+        </div>
+    </div>
+
+    <!-- Formulaire d'import -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-upload me-2"></i>Importer le fichier Excel</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('imports.import_excel') }}" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label">Sélectionner le fichier de pré-dépistage (.xlsx)</label>
+                    <input type="file" class="form-control form-control-lg" id="file" name="file" accept=".xlsx,.xls" required>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="/" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle me-2"></i>Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-upload me-2"></i>Importer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Format du tableau -->
+    <div class="card mt-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-table me-2"></i>Format du Tableau de Pré-dépistage</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-3">Le fichier Excel doit contenir <strong>6 colonnes uniquement</strong> :</p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th style="width: 20%;">Colonne</th>
+                            <th style="width: 15%;">Type</th>
+                            <th style="width: 25%;">Exemple</th>
+                            <th style="width: 40%;">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Nom</strong></td>
+                            <td><span class="badge bg-info">Texte</span></td>
+                            <td>ALAMI</td>
+                            <td>Nom de famille (MAJUSCULES)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prénom</strong></td>
+                            <td><span class="badge bg-info">Texte</span></td>
+                            <td>Mohamed</td>
+                            <td>Prénom de l'élève</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Âge</strong></td>
+                            <td><span class="badge bg-warning text-dark">Nombre</span></td>
+                            <td>10</td>
+                            <td>Âge en années (5-15 ans)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Classe</strong></td>
+                            <td><span class="badge bg-info">Texte</span></td>
+                            <td>CM2, CE2, CP</td>
+                            <td>Niveau de classe</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acuité OD</strong></td>
+                            <td><span class="badge bg-warning text-dark">Nombre</span></td>
+                            <td>10, 8, 5</td>
+                            <td>Acuité visuelle brute Œil Droit (1 à 12)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acuité OG</strong></td>
+                            <td><span class="badge bg-warning text-dark">Nombre</span></td>
+                            <td>10, 9, 6</td>
+                            <td>Acuité visuelle brute Œil Gauche (1 à 12)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info mt-3 mb-0">
+                <h6><i class="bi bi-info-circle me-2"></i>Important</h6>
+                <ul class="mb-0">
+                    <li>La <strong>première ligne</strong> doit contenir les noms des colonnes (en-têtes)</li>
+                    <li>Les données commencent à la <strong>ligne 2</strong></li>
+                    <li>L'acuité visuelle est un nombre de <strong>1 à 12</strong> (pour 1/10 à 12/10)</li>
+                    <li>Ville et École seront prises de la <strong>session active</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exemple visuel -->
+    <div class="card mt-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Exemple de fichier</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered" style="font-family: monospace; font-size: 0.9em;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Âge</th>
+                            <th>Classe</th>
+                            <th>Acuité OD</th>
+                            <th>Acuité OG</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>ALAMI</td>
+                            <td>Mohamed</td>
+                            <td>10</td>
+                            <td>CM2</td>
+                            <td>10</td>
+                            <td>10</td>
+                        </tr>
+                        <tr>
+                            <td>BENALI</td>
+                            <td>Fatima</td>
+                            <td>9</td>
+                            <td>CE2</td>
+                            <td>8</td>
+                            <td>9</td>
+                        </tr>
+                        <tr>
+                            <td>CHERIF</td>
+                            <td>Ahmed</td>
+                            <td>8</td>
+                            <td>CE1</td>
+                            <td>5</td>
+                            <td>6</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

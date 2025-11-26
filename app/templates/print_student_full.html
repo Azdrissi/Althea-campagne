@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche complète – {{ student.nom }} {{ student.prenom }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+        h1 { font-size: 20px; margin-bottom: 10px; }
+        .section { margin-bottom: 12px; }
+        .section h2 { font-size: 14px; margin-bottom: 4px; border-bottom: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        th, td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+    </style>
+</head>
+<body onload="window.print()">
+<h1>Fiche de consultation – {{ student.nom }} {{ student.prenom }}</h1>
+
+<div class="section">
+    <h2>Informations générales</h2>
+    <table>
+        <tr><th>Ville</th><td>{{ student.ville or '-' }}</td></tr>
+        <tr><th>École</th><td>{{ student.ecole or '-' }}</td></tr>
+        <tr><th>Classe</th><td>{{ student.classe or '-' }}</td></tr>
+        <tr><th>Âge</th><td>{{ student.age or '-' }}</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Prescription</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Œil</th><th>Sphère</th><th>Cylindre</th><th>Axe</th><th>EP</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>OD</td>
+                <td>{% if student.sph_od is not none %}{{ '%+.2f'|format(student.sph_od) }}{% else %}-{% endif %}</td>
+                <td>{% if student.cyl_od is not none %}{{ '%+.2f'|format(student.cyl_od) }}{% else %}-{% endif %}</td>
+                <td>{% if student.axe_od is not none %}{{ student.axe_od }}°{% else %}-{% endif %}</td>
+                <td>{% if student.ep_pupillometre_od is not none %}{{ student.ep_pupillometre_od }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+                <td>OG</td>
+                <td>{% if student.sph_og is not none %}{{ '%+.2f'|format(student.sph_og) }}{% else %}-{% endif %}</td>
+                <td>{% if student.cyl_og is not none %}{{ '%+.2f'|format(student.cyl_og) }}{% else %}-{% endif %}</td>
+                <td>{% if student.axe_og is not none %}{{ student.axe_og }}°{% else %}-{% endif %}</td>
+                <td>{% if student.ep_pupillometre_og is not none %}{{ student.ep_pupillometre_og }}{% else %}-{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Observations</h2>
+    <p>{{ student.observations or '—' }}</p>
+</div>
+
+</body>
+</html>

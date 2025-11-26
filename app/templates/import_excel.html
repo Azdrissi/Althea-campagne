@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Import Excel{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2><i class="bi bi-file-earmark-arrow-up me-2"></i>Import Excel</h2>
+    <p class="text-muted">Importez une liste d'élèves depuis un fichier Excel (.xlsx ou .xls)</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-upload me-2"></i>Téléverser un fichier Excel</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Important :</strong> Vous devez d'abord activer une école dans 
+                    <a href="/session/ecole" class="alert-link">"École Active"</a> 
+                    avant d'importer. La ville et l'école seront automatiquement assignées.
+                </div>
+
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file-input" class="form-label">Sélectionnez un fichier Excel</label>
+                        <input type="file" class="form-control" id="file-input" name="file" accept=".xlsx,.xls" required>
+                        <small class="text-muted">Formats acceptés : .xlsx, .xls</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/imports/template" class="btn btn-outline-info">
+                            <i class="bi bi-download me-1"></i>Télécharger le modèle Excel
+                        </a>
+                        <button type="submit" class="btn btn-success" id="btn-upload">
+                            <i class="bi bi-upload me-1"></i>Importer
+                        </button>
+                    </div>
+                </form>
+
+                <div id="progress-container" class="mt-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p class="text-center mt-2">Import en cours...</p>
+                </div>
+
+                <div id="result-container" class="mt-3" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Format attendu</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Votre fichier Excel doit contenir les colonnes suivantes :</p>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Colonne</th>
+                            <th>Requis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Nom</strong></td>
+                            <td><span class="badge bg-danger">Oui</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prénom</strong></td>
+                            <td><span class="badge bg-danger">Oui</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Âge</strong></td>
+                            <td><span class="badge bg-secondary">Non</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Niveau</strong></td>
+                            <td><span class="badge bg-danger">Oui</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acuité Visuelle OD</strong></td>
+                            <td><span class="badge bg-secondary">Non</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Acuité Visuelle OG</strong></td>
+                            <td><span class="badge bg-secondary">Non</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Important :</strong> 
+                    <ul class="mb-0 mt-2">
+                        <li>La première ligne doit contenir les en-têtes</li>
+                        <li>Ville et École = École Active</li>
+                        <li>Niveau = Classe (CP, CE1, CE2...)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Conseils</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li class="mb-2">Activez d'abord une école dans "École Active"</li>
+                    <li class="mb-2">Téléchargez le modèle Excel pour voir un exemple</li>
+                    <li class="mb-2">L'acuité visuelle peut être laissée vide</li>
+                    <li class="mb-2">Les doublons (même nom + prénom) sont ignorés</li>
+                    <li>Les élèves importés auront le statut "Pré-listé"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('Veuillez sélectionner un fichier');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Afficher la barre de progression
+    document.getElementById('progress-container').style.display = 'block';
+    document.getElementById('result-container').style.display = 'none';
+    document.getElementById('btn-upload').disabled = true;
+
+    fetch('/imports/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('btn-upload').disabled = false;
+
+        const resultContainer = document.getElementById('result-container');
+        resultContainer.style.display = 'block';
+
+        if (data.success) {
+            let html = `
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle me-2"></i>Import réussi !</h5>
+                    <p class="mb-1"><strong>${data.imported}</strong> élève(s) importé(s)</p>
+                    <p class="mb-0 small">École : ${data.ecole} (${data.ville})</p>
+                </div>
+            `;
+
+            if (data.errors && data.errors.length > 0) {
+                html += `
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>Avertissements (${data.errors.length})</h6>
+                        <ul class="mb-0">
+                            ${data.errors.slice(0, 5).map(err => `<li>${err}</li>`).join('')}
+                        </ul>
+                        ${data.errors.length > 5 ? '<p class="mb-0 mt-2"><small>... et ' + (data.errors.length - 5) + ' autre(s)</small></p>' : ''}
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="mt-3">
+                    <a href="/students" class="btn btn-primary">
+                        <i class="bi bi-people me-1"></i>Voir la liste des élèves
+                    </a>
+                </div>
+            `;
+
+            resultContainer.innerHTML = html;
+            fileInput.value = '';
+        } else {
+            resultContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-x-circle me-2"></i>Erreur</h5>
+                    <p class="mb-0">${data.error}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('btn-upload').disabled = false;
+
+        const resultContainer = document.getElementById('result-container');
+        resultContainer.style.display = 'block';
+        resultContainer.innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="bi bi-x-circle me-2"></i>Erreur</h5>
+                <p class="mb-0">Erreur lors de l'import : ${error}</p>
+            </div>
+        `;
+    });
+});
+</script>
+{% endblock %}

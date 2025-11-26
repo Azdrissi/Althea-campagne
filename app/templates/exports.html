@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Export des élèves{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Export des élèves</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        Nombre total d'élèves enregistrés : 
+                        <strong>{{ total_students }}</strong>
+                    </p>
+
+                    <p class="text-muted small">
+                        Le fichier sera généré au format <strong>Excel (.xlsx)</strong> et téléchargé automatiquement.
+                    </p>
+
+                    <a href="{{ url_for('exports.export_excel') }}" class="btn btn-success">
+                        <i class="bi bi-download me-2"></i>Exporter en Excel
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

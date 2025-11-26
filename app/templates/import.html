@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Import CSV{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2><i class="bi bi-upload me-2"></i>Import de Pré-Liste CSV</h2>
+    <p class="text-muted">Importez une liste d'élèves au format CSV (ville, école, classe, nom, prénom, âge)</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>Sélectionner un Fichier CSV</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="file" id="csv-file" class="form-control" accept=".csv" required>
+                    <small class="text-muted mt-2 d-block">
+                        <strong>Format attendu:</strong> ville,ecole,classe,nom,prenom,age
+                    </small>
+                </div>
+                <button onclick="previewImport()" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Prévisualiser
+                </button>
+            </div>
+        </div>
+
+        <!-- Prévisualisation -->
+        <div id="preview-section" class="card shadow-sm" style="display: none;">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Prévisualisation</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong id="preview-count">0</strong> élève(s) détecté(s)
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Ville</th>
+                                <th>École</th>
+                                <th>Classe</th>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Âge</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-table">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <button onclick="executeImport()" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle me-1"></i>Confirmer l'Import
+                    </button>
+                    <button onclick="cancelImport()" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle me-1"></i>Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div id="result-section" class="card shadow-sm mt-4" style="display: none;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Résultat de l'Import</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-lg me-2"></i>Import Réussi!</h5>
+                    <ul class="mb-0">
+                        <li><strong id="result-imported">0</strong> élèves importés</li>
+                        <li><strong id="result-duplicates">0</strong> doublons ignorés</li>
+                        <li><strong id="result-errors">0</strong> erreurs</li>
+                    </ul>
+                </div>
+                <div id="error-list"></div>
+                <a href="/students" class="btn btn-primary">
+                    <i class="bi bi-arrow-right me-1"></i>Voir la Liste des Élèves
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <h6>Format CSV Requis</h6>
+                <p class="small">Le fichier CSV doit contenir les colonnes suivantes :</p>
+                <ul class="small">
+                    <li><strong>ville</strong> : Nom de la ville</li>
+                    <li><strong>ecole</strong> : Nom de l'école</li>
+                    <li><strong>classe</strong> : Niveau de classe</li>
+                    <li><strong>nom</strong> : Nom de famille</li>
+                    <li><strong>prenom</strong> : Prénom</li>
+                    <li><strong>age</strong> : Âge (optionnel)</li>
+                </ul>
+
+                <h6 class="mt-3">Exemple de fichier CSV</h6>
+                <pre class="bg-light p-2 small">ville,ecole,classe,nom,prenom,age
+Casablanca,École A,CP,ALAMI,Fatima,6
+Rabat,École B,CE1,BERRADA,Ali,7</pre>
+
+                <div class="alert alert-warning small mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> Les doublons (même nom/prénom dans la même école) seront automatiquement ignorés.
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-download me-2"></i>Modèle CSV</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">Téléchargez un modèle vierge pour faciliter la saisie :</p>
+                <a href="data:text/csv;charset=utf-8,ville%2Cecole%2Cclasse%2Cnom%2Cprenom%2Cage%0A" 
+                   download="modele_import.csv" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i>Télécharger Modèle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let previewData = null;
+
+function previewImport() {
+    const fileInput = document.getElementById('csv-file');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('Veuillez sélectionner un fichier CSV');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('/imports/preview', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            previewData = data.data;
+            displayPreview(data.data);
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erreur lors de la lecture du fichier: ' + error);
+    });
+}
+
+function displayPreview(data) {
+    document.getElementById('preview-count').textContent = data.total;
+
+    const tbody = document.getElementById('preview-table');
+    tbody.innerHTML = data.rows.map(row => `
+        <tr>
+            <td>${row.ville}</td>
+            <td>${row.ecole}</td>
+            <td>${row.classe}</td>
+            <td><strong>${row.nom}</strong></td>
+            <td>${row.prenom}</td>
+            <td>${row.age}</td>
+        </tr>
+    `).join('');
+
+    document.getElementById('preview-section').style.display = 'block';
+}
+
+function executeImport() {
+    if (!previewData) {
+        alert('Aucune donnée à importer');
+        return;
+    }
+
+    if (!confirm(`Confirmer l'import de ${previewData.total} élèves ?`)) {
+        return;
+    }
+
+    fetch('/imports/execute', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({rows: previewData.rows})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayResult(data.result);
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erreur lors de l\'import: ' + error);
+    });
+}
+
+function displayResult(result) {
+    document.getElementById('result-imported').textContent = result.imported;
+    document.getElementById('result-duplicates').textContent = result.duplicates;
+    document.getElementById('result-errors').textContent = result.errors.length;
+
+    if (result.errors.length > 0) {
+        const errorList = document.getElementById('error-list');
+        errorList.innerHTML = `
+            <div class="alert alert-danger">
+                <h6>Erreurs détectées:</h6>
+                <ul class="mb-0">
+                    ${result.errors.map(err => `<li>${err}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('result-section').style.display = 'block';
+}
+
+function cancelImport() {
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('csv-file').value = '';
+    previewData = null;
+}
+</script>
+{% endblock %}
