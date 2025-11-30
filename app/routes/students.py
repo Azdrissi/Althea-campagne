@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
+from flask import current_app, Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
+from werkzeug.utils import secure_filename
 from app.models import Student
 from app import db
 from datetime import datetime
@@ -6,17 +7,22 @@ from sqlalchemy import or_
 
 bp = Blueprint('students', __name__, url_prefix='/students')
 
+# ---------------------------------------------------------
+# LISTE DES ELEVES (tri : derniers modifiés en premier)
+# ---------------------------------------------------------
 @bp.route('/')
 def list_students():
     search_term = request.args.get('search', '').strip()
+    site_filter = request.args.get('site', '').strip()
 
     if 'session_active' in session:
-        session_active = session['session_active']
-        ville = session_active['ville']
-        ecole = session_active['ecole']
-        query = Student.query.filter_by(ville=ville, ecole=ecole)
+        sa = session['session_active']
+        query = Student.query.filter_by(ville=sa['ville'], ecole=sa['ecole'])
     else:
         query = Student.query
+
+    if site_filter:
+        query = query.filter_by(site=site_filter)
 
     if search_term:
         search_pattern = f'%{search_term}%'
@@ -28,42 +34,74 @@ def list_students():
             )
         )
 
-    students = query.order_by(Student.classe, Student.nom).all()
-    return render_template('student_list.html', students=students, search_term=search_term)
+    students = query.order_by(
+        Student.updated_at.desc().nullslast(),
+        Student.id.desc()
+    ).all()
 
+    sites = []
+    if 'session_active' in session:
+        sa = session['session_active']
+        rows = db.session.query(Student.site).filter_by(
+            ville=sa['ville'], ecole=sa['ecole']
+        ).distinct().all()
+        sites = [s[0] for s in rows if s[0]]
+
+    return render_template(
+        'student_list.html',
+        students=students,
+        search_term=search_term,
+        site_filter=site_filter,
+        sites=sites
+    )
+
+# ---------------------------------------------------------
+# NOUVEL ELEVE
+# ---------------------------------------------------------
 @bp.route('/new')
 def new_student():
     if 'session_active' not in session:
-        flash("Veuillez d'abord démarrer une école", 'warning')
+        flash("Veuillez d'abord démarrer une école.", "danger")
         return redirect(url_for('index'))
 
-    session_active = session['session_active']
+    sa = session['session_active']
+
+    rows = db.session.query(Student.site).filter_by(
+        ville=sa['ville'], ecole=sa['ecole']
+    ).distinct().all()
+    available_sites = [s[0] for s in rows if s[0]]
+
     student = type('obj', (object,), {
         'id': None,
-        'ville': session_active['ville'],
-        'ecole': session_active['ecole'],
-        'nom': '',  # ← CHANGÉ: '' au lieu de None
-        'prenom': '',  # ← CHANGÉ: '' au lieu de None
+        'ville': sa['ville'],
+        'ecole': sa['ecole'],
+        'site': '',
+        'nom': '',
+        'prenom': '',
+        'classe': '',
         'age': None,
-        'classe': None,
-        'status': 'prelisted',
         'acuite_od': None,
         'acuite_og': None,
         'sph_od': None,
-        'cyl_od': None,
-        'axe_od': None,
         'sph_og': None,
+        'cyl_od': None,
         'cyl_og': None,
+        'axe_od': None,
         'axe_og': None,
         'ep_pupillometre_od': None,
         'ep_pupillometre_og': None,
         'prise_en_charge': None,
-        'observations': None,
-        'photo_monture': None
+        'observations': '',
+        'status': 'prelisted',
+        'photo_monture': None,
+        'updated_at': None
     })()
 
-    return render_template('student_form.html', student=student, is_new=True)
+    return render_template('student_form.html', student=student, is_new=True, available_sites=available_sites)
 
+# ---------------------------------------------------------
+# CREATION
+# ---------------------------------------------------------
 @bp.route('/new', methods=['POST'])
 def create_student():
     try:
@@ -71,33 +109,57 @@ def create_student():
             flash("Veuillez d'abord démarrer une école", 'danger')
             return redirect(url_for('index'))
 
-        session_active = session['session_active']
+        sa = session['session_active']
+        site = request.form.get('site')
+
+        if not site:
+            flash("Veuillez sélectionner un site/annexe", 'danger')
+            return redirect(url_for('students.new_student'))
+
         student = Student(
-            ville=session_active['ville'],
-            ecole=session_active['ecole'],
-            classe=request.form.get('classe'),
+            ville=sa['ville'],
+            ecole=sa['ecole'],
+            site=site,
             nom=request.form.get('nom'),
             prenom=request.form.get('prenom'),
+            classe=request.form.get('classe'),
             age=request.form.get('age', type=int),
-            status='prelisted'
+            status='prelisted',
+            updated_at=datetime.utcnow()
         )
 
         db.session.add(student)
         db.session.commit()
 
-        flash('Élève créé avec succès !', 'success')
+        flash("Élève créé avec succès", "success")
         return redirect(url_for('students.edit_student', id=student.id))
+
     except Exception as e:
         db.session.rollback()
-        flash(f'Erreur: {str(e)}', 'danger')
+        flash(f"Erreur: {e}", "danger")
         return redirect(url_for('students.new_student'))
 
+# ---------------------------------------------------------
+# EDITER
+# ---------------------------------------------------------
 @bp.route('/edit/<int:id>')
 def edit_student(id):
     student = Student.query.get_or_404(id)
-    return render_template('student_form.html', student=student, is_new=False)
 
-@bp.route('/edit/<int:id>', methods=['POST'])
+    available_sites = []
+    if 'session_active' in session:
+        sa = session['session_active']
+        rows = db.session.query(Student.site).filter_by(
+            ville=sa['ville'], ecole=sa['ecole']
+        ).distinct().all()
+        available_sites = [s[0] for s in rows if s[0]]
+
+    return render_template('student_form.html', student=student, is_new=False, available_sites=available_sites)
+
+# ---------------------------------------------------------
+# UPDATE
+# ---------------------------------------------------------
+@bp.route('/update/<int:id>', methods=['POST'])
 def update_student(id):
     try:
         student = Student.query.get_or_404(id)
@@ -107,36 +169,56 @@ def update_student(id):
         student.age = request.form.get('age', type=int)
         student.classe = request.form.get('classe', student.classe)
 
-        student.acuite_od = request.form.get('acuite_od', type=int)
-        student.acuite_og = request.form.get('acuite_og', type=int)
+        new_site = request.form.get('site')
+        if new_site:
+            student.site = new_site
+
+        student.acuite_od = request.form.get('acuite_od')
+        student.acuite_og = request.form.get('acuite_og')
 
         student.sph_od = request.form.get('sph_od', type=float)
-        student.cyl_od = request.form.get('cyl_od', type=float)
-        student.axe_od = request.form.get('axe_od', type=int)
-
         student.sph_og = request.form.get('sph_og', type=float)
+        student.cyl_od = request.form.get('cyl_od', type=float)
         student.cyl_og = request.form.get('cyl_og', type=float)
-        student.axe_og = request.form.get('axe_og', type=int)
+        student.axe_od = request.form.get('axe_od', type=float)
+        student.axe_og = request.form.get('axe_og', type=float)
 
         student.ep_pupillometre_od = request.form.get('ep_pupillometre_od', type=float)
         student.ep_pupillometre_og = request.form.get('ep_pupillometre_og', type=float)
 
-        prise_en_charge = request.form.getlist('prise_en_charge')
-        student.prise_en_charge = ','.join(prise_en_charge) if prise_en_charge else None
+        pec = request.form.getlist('prise_en_charge')
+        student.prise_en_charge = ','.join(pec) if pec else None
 
         student.observations = request.form.get('observations')
+
+        # Passage automatique en "Pris en charge"
+        has_consult = any([
+            student.acuite_od,
+            student.acuite_og,
+            student.sph_od is not None,
+            student.sph_og is not None,
+            student.prise_en_charge
+        ])
+
+        if has_consult:
+            if student.status == 'prelisted':
+                student.status = 'completed'
+            student.date_consultation = datetime.utcnow()
+
         student.updated_at = datetime.utcnow()
 
         db.session.commit()
-
-        flash('Élève mis à jour avec succès !', 'success')
+        flash("Élève mis à jour", "success")
         return redirect(url_for('students.list_students'))
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Erreur: {str(e)}', 'danger')
+        flash(f"Erreur: {e}", "danger")
         return redirect(url_for('students.edit_student', id=id))
 
+# ---------------------------------------------------------
+# DELETE
+# ---------------------------------------------------------
 @bp.route('/delete/<int:id>', methods=['POST'])
 def delete_student(id):
     try:
@@ -148,165 +230,66 @@ def delete_student(id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
 
-
-
-@bp.route('/<int:student_id>/print/full')
-def print_student_full(student_id):
-    """Impression HTML complète de la fiche (avec logo, cadres, etc.)."""
-    student = Student.query.get_or_404(student_id)
-    return render_template('print_student_full.html', student=student)
-
-
-@bp.route('/<int:student_id>/print/preprinted')
+# ---------------------------------------------------------
+# IMPRESSIONS (pré-imprimé — individuel)
+# ---------------------------------------------------------
+@bp.route('/print_preprinted/<int:student_id>')
 def print_student_preprinted(student_id):
-    """Impression sur fiche pré-imprimée Fondation Althea (données seules)."""
     student = Student.query.get_or_404(student_id)
-    return render_template('print_student_preprinted.html', student=student)
+    return render_template('print_preprinted.html', student=student)
 
-@bp.route('/pdf/<int:id>')
-def generate_pdf(id):
-    from flask import make_response
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
-    from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
-    from io import BytesIO
+# ---------------------------------------------------------
+# IMPRESSION FICHE COMPLETE — INDIVIDUELLE
+# ---------------------------------------------------------
+@bp.route('/print_full/<int:student_id>')
+def print_student_full(student_id):
+    student = Student.query.get_or_404(student_id)
+    return render_template('print_full.html', student=student)
 
-    student = Student.query.get_or_404(id)
+# ---------------------------------------------------------
+# IMPRESSION TOUTES FICHES — PRE-IMPRIME
+# ---------------------------------------------------------
+@bp.route('/print_all_preprinted')
+def print_all_preprinted():
+    site = request.args.get('site', '').strip()
 
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    elements = []
-    styles = getSampleStyleSheet()
+    if 'session_active' in session:
+        sa = session['session_active']
+        query = Student.query.filter_by(ville=sa['ville'], ecole=sa['ecole'])
+    else:
+        query = Student.query
 
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=16,
-        textColor=colors.HexColor('#2c3e50'),
-        alignment=TA_CENTER,
-        spaceAfter=30
-    )
+    if site:
+        query = query.filter_by(site=site)
 
-    title = Paragraph(f"FICHE DE CONSULTATION<br/>{student.nom} {student.prenom}", title_style)
-    elements.append(title)
-    elements.append(Spacer(1, 0.5*cm))
+    students = query.order_by(Student.site, Student.classe, Student.nom).all()
 
-    info_data = [
-        ['INFORMATIONS GÉNÉRALES', ''],
-        ['Nom', student.nom or '-'],
-        ['Prénom', student.prenom or '-'],
-        ['Âge', str(student.age) if student.age else '-'],
-        ['Classe', student.classe or '-'],
-        ['École', student.ecole or '-'],
-        ['Ville', student.ville or '-']
-    ]
+    if not students:
+        flash("Aucun élève pour ce filtre", "warning")
+        return redirect(url_for('students.list_students'))
 
-    info_table = Table(info_data, colWidths=[6*cm, 10*cm])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498db')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(info_table)
-    elements.append(Spacer(1, 1*cm))
+    return render_template('print_preprinted_all.html', students=students)
 
-    acuite_data = [
-        ['ACUITÉ VISUELLE', '', ''],
-        ['', 'OD', 'OG'],
-        ['Acuité', 
-         f"{student.acuite_od}/10" if student.acuite_od else '-',
-         f"{student.acuite_og}/10" if student.acuite_og else '-']
-    ]
+# ---------------------------------------------------------
+# IMPRESSION TOUTES FICHES — COMPLET
+# ---------------------------------------------------------
+@bp.route('/print_all_full')
+def print_all_full():
+    site = request.args.get('site', '').strip()
 
-    acuite_table = Table(acuite_data, colWidths=[6*cm, 5*cm, 5*cm])
-    acuite_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e74c3c')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('SPAN', (0, 0), (-1, 0)),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(acuite_table)
-    elements.append(Spacer(1, 1*cm))
+    if 'session_active' in session:
+        sa = session['session_active']
+        query = Student.query.filter_by(ville=sa['ville'], ecole=sa['ecole'])
+    else:
+        query = Student.query
 
-    prescription_data = [
-        ['PRESCRIPTION', '', '', '', '', ''],
-        ['', 'Sphère', 'Cylindre', 'Axe', 'EP', ''],
-        ['OD', 
-         f"{student.sph_od:+.2f}" if student.sph_od else '-',
-         f"{student.cyl_od:+.2f}" if student.cyl_od else '-',
-         f"{student.axe_od}°" if student.axe_od else '-',
-         f"{student.ep_pupillometre_od} mm" if student.ep_pupillometre_od else '-',
-         ''],
-        ['OG',
-         f"{student.sph_og:+.2f}" if student.sph_og else '-',
-         f"{student.cyl_og:+.2f}" if student.cyl_og else '-',
-         f"{student.axe_og}°" if student.axe_og else '-',
-         f"{student.ep_pupillometre_og} mm" if student.ep_pupillometre_og else '-',
-         '']
-    ]
+    if site:
+        query = query.filter_by(site=site)
 
-    prescription_table = Table(prescription_data, colWidths=[2*cm, 3*cm, 3*cm, 2.5*cm, 3*cm, 2.5*cm])
-    prescription_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#27ae60')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('SPAN', (0, 0), (-1, 0)),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(prescription_table)
-    elements.append(Spacer(1, 1*cm))
+    students = query.order_by(Student.site, Student.classe, Student.nom).all()
 
-    prise_data = [
-        ['PRISE EN CHARGE', ''],
-        ['Type', student.prise_en_charge or 'Aucune']
-    ]
+    if not students:
+        flash("Aucun élève pour ce filtre", "warning")
+        return redirect(url_for('students.list_students'))
 
-    prise_table = Table(prise_data, colWidths=[6*cm, 10*cm])
-    prise_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f39c12')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(prise_table)
-    elements.append(Spacer(1, 1*cm))
-
-    if student.observations:
-        obs_data = [
-            ['OBSERVATIONS', ''],
-            ['', student.observations]
-        ]
-        obs_table = Table(obs_data, colWidths=[6*cm, 10*cm])
-        obs_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#95a5a6')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('SPAN', (0, 0), (-1, 0)),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP')
-        ]))
-        elements.append(obs_table)
-
-    doc.build(elements)
-    buffer.seek(0)
-
-    response = make_response(buffer.getvalue())
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=fiche_{student.nom}_{student.prenom}.pdf'
-
-    return response
+    return render_template('print_full_all.html', students=students)

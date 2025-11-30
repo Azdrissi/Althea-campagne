@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche pré-imprimée – {{ student.nom }} {{ student.prenom }}</title>
+    <style>
+        /* On travaille en millimètres, directement depuis le bord de la feuille */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+        }
+
+        .zone {
+            position: relative;
+            width: 210mm;
+            height: 297mm;
+        }
+
+        /* Tous les champs imprimés : police 18, très gras */
+        .zone span {
+            font-size: 18px;
+            
+            font-family: Arial, sans-serif;
+        }
+
+        /* Coordonnées ajustées (mm depuis le bord haut / gauche) */
+
+        /* Ligne Ecole / Classe / Ville */
+        .ecole  { position: absolute; top: 28mm; left: 24mm; }
+        .classe { position: absolute; top: 28mm; left: 120mm; }
+        .ville  { position: absolute; top: 28mm; left: 160mm; }
+
+        /* Ligne Nom / Prénom / Âge (inchangée) */
+        .nom    { position: absolute; top: 42mm; left: 35mm; }
+        .prenom { position: absolute; top: 42mm; left: 120mm; }
+        .age    { position: absolute; top: 42mm; left: 195mm; }
+
+        /* Acuité brute – valeurs OD / OG */
+        .acuite_od { position: absolute; top: 69mm; left: 65mm; }
+        .acuite_og { position: absolute; top: 69mm; left: 145mm; }
+
+        /* Nouvelle prescription (OD / OG) */
+        .sph_od { position: absolute; top: 79mm; left: 65mm; }
+        .cyl_od { position: absolute; top: 79mm; left: 90mm; }
+        .axe_od { position: absolute; top: 79mm; left: 115mm; }
+
+        .sph_og { position: absolute; top: 79mm; left: 145mm; }
+        .cyl_og { position: absolute; top: 79mm; left: 170mm; }
+        .axe_og { position: absolute; top: 79mm; left: 195mm; }
+
+        /* Ecart pupillaire / Observations */
+        .ep  { position: absolute; top: 100mm; left: 170mm; }
+        .obs { position: absolute; top: 120mm; left: 30mm; width: 150mm; }
+    </style>
+</head>
+<body onload="window.print()">
+<div class="zone">
+    <!-- Ecole / Classe / Ville -->
+    <span class="ecole">
+            {% if not student.site or student.site == student.ecole or student.site == 'École Principale' %}
+                {{ student.ecole }}
+            {% else %}
+                {{ student.site }} / {{ student.ecole }}
+            {% endif %}
+        </span>
+    <span class="classe">{{ student.classe or '' }}</span>
+    <span class="ville">{{ student.ville or '' }}</span>
+
+    <!-- Nom / Prénom / Âge -->
+    <span class="nom">{{ student.nom or '' }}</span>
+    <span class="prenom">{{ student.prenom or '' }}</span>
+    <span class="age">{{ student.age or '' }}</span>
+
+    <!-- Acuité brute -->
+    <span class="acuite_od">{{ student.acuite_od or '' }}</span>
+    <span class="acuite_og">{{ student.acuite_og or '' }}</span>
+
+    <!-- Nouvelle prescription (OD / OG) -->
+    <span class="sph_od">
+        {% if student.sph_od is not none %}{{ '%+.2f'|format(student.sph_od) }}{% endif %}
+    </span>
+    <span class="cyl_od">
+        {% if student.cyl_od is not none %}{{ '%+.2f'|format(student.cyl_od) }}{% endif %}
+    </span>
+    <span class="axe_od">
+        {% if student.axe_od is not none %}{{ student.axe_od }}°{% endif %}
+    </span>
+
+    <span class="sph_og">
+        {% if student.sph_og is not none %}{{ '%+.2f'|format(student.sph_og) }}{% endif %}
+    </span>
+    <span class="cyl_og">
+        {% if student.cyl_og is not none %}{{ '%+.2f'|format(student.cyl_og) }}{% endif %}
+    </span>
+    <span class="axe_og">
+        {% if student.axe_og is not none %}{{ student.axe_og }}°{% endif %}
+    </span>
+
+    <!-- Ecart pupillaire / Observations -->
+    <span class="ep">
+        {% if student.ep_pupillometre_od and student.ep_pupillometre_og %}
+            {{ student.ep_pupillometre_od }}/{{ student.ep_pupillometre_og }}
+        {% endif %}
+    </span>
+
+    <span class="obs">{{ student.observations or '' }}</span>
+</div>
+</body>
+</html>

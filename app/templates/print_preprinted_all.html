@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiches pré-imprimées – Impression groupée</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+        }
+
+        .page {
+            position: relative;
+            width: 210mm;
+            height: 297mm;
+        }
+
+        .zone {
+            position: absolute;
+            left: 0;
+            width: 210mm;
+            height: 148.5mm;
+        }
+
+        /* Bloc remonté de 7 mm */
+        .zone.top {
+            top: -7mm;
+        }
+
+        /* 150 - 7 = 143 mm, puis descendu encore de 5 mm => 148mm */
+        .zone.bottom {
+            top: 148mm;
+        }
+
+        .zone span {
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+        }
+
+        /* ---------- FICHE DU HAUT ---------- */
+
+        .zone.top .ecole  { position: absolute; top: 28mm; left: 24mm; }
+        .zone.top .classe { position: absolute; top: 28mm; left: 120mm; }
+        .zone.top .ville  { position: absolute; top: 28mm; left: 160mm; }
+
+        .zone.top .nom    { position: absolute; top: 42mm; left: 35mm; }
+        .zone.top .prenom { position: absolute; top: 42mm; left: 120mm; }
+        .zone.top .age    { position: absolute; top: 42mm; left: 195mm; }
+
+        .zone.top .acuite_od { position: absolute; top: 69mm; left: 65mm; }
+        .zone.top .acuite_og { position: absolute; top: 69mm; left: 145mm; }
+
+        .zone.top .sph_od { position: absolute; top: 79mm; left: 65mm; }
+        .zone.top .cyl_od { position: absolute; top: 79mm; left: 90mm; }
+        .zone.top .axe_od { position: absolute; top: 79mm; left: 115mm; }
+
+        .zone.top .sph_og { position: absolute; top: 79mm; left: 145mm; }
+        .zone.top .cyl_og { position: absolute; top: 79mm; left: 170mm; }
+        .zone.top .axe_og { position: absolute; top: 79mm; left: 195mm; }
+
+        .zone.top .ep  { position: absolute; top: 100mm; left: 170mm; }
+        .zone.top .obs { position: absolute; top: 120mm; left: 30mm; width: 150mm; }
+
+        /* ---------- FICHE DU BAS ---------- */
+
+        .zone.bottom .ecole  { position: absolute; top: 23mm; left: 24mm; }
+        .zone.bottom .classe { position: absolute; top: 23mm; left: 120mm; }
+        .zone.bottom .ville  { position: absolute; top: 23mm; left: 160mm; }
+
+        .zone.bottom .nom    { position: absolute; top: 37mm; left: 35mm; }
+        .zone.bottom .prenom { position: absolute; top: 37mm; left: 120mm; }
+        .zone.bottom .age    { position: absolute; top: 37mm; left: 195mm; }
+
+        .zone.bottom .acuite_od { position: absolute; top: 64mm; left: 65mm; }
+        .zone.bottom .acuite_og { position: absolute; top: 64mm; left: 145mm; }
+
+        .zone.bottom .sph_od { position: absolute; top: 74mm; left: 65mm; }
+        .zone.bottom .cyl_od { position: absolute; top: 74mm; left: 90mm; }
+        .zone.bottom .axe_od { position: absolute; top: 74mm; left: 115mm; }
+
+        .zone.bottom .sph_og { position: absolute; top: 74mm; left: 145mm; }
+        .zone.bottom .cyl_og { position: absolute; top: 74mm; left: 170mm; }
+        .zone.bottom .axe_og { position: absolute; top: 74mm; left: 195mm; }
+
+        .zone.bottom .ep  { position: absolute; top: 95mm; left: 170mm; }
+        .zone.bottom .obs { position: absolute; top: 115mm; left: 30mm; width: 150mm; }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+{% for i in range(0, students|length, 2) %}
+    {% set s1 = students[i] %}
+    {% set s2 = students[i + 1] if i + 1 < students|length else None %}
+
+    <div class="page">
+
+        <!-- Fiche du haut -->
+        <div class="zone top">
+
+            <!-- Gestion École / Annexe -->
+            <span class="ecole">
+                {% if not s1.site or s1.site == s1.ecole or s1.site == 'École Principale' %}
+                    {{ s1.ecole }}
+                {% else %}
+                    {{ s1.site }} / {{ s1.ecole }}
+                {% endif %}
+            </span>
+
+            <span class="classe">{{ s1.classe or '' }}</span>
+            <span class="ville">{{ s1.ville or '' }}</span>
+
+            <span class="nom">{{ s1.nom or '' }}</span>
+            <span class="prenom">{{ s1.prenom or '' }}</span>
+            <span class="age">{% if s1.age is not none %}{{ s1.age }}{% endif %}</span>
+
+            <span class="acuite_od">{% if s1.acuite_od %}{{ s1.acuite_od }}{% endif %}</span>
+            <span class="acuite_og">{% if s1.acuite_og %}{{ s1.acuite_og }}{% endif %}</span>
+
+            <span class="sph_od">{% if s1.sph_od %}{{ s1.sph_od }}{% endif %}</span>
+            <span class="cyl_od">{% if s1.cyl_od %}{{ s1.cyl_od }}{% endif %}</span>
+            <span class="axe_od">{% if s1.axe_od %}{{ s1.axe_od }}°{% endif %}</span>
+
+            <span class="sph_og">{% if s1.sph_og %}{{ s1.sph_og }}{% endif %}</span>
+            <span class="cyl_og">{% if s1.cyl_og %}{{ s1.cyl_og }}{% endif %}</span>
+            <span class="axe_og">{% if s1.axe_og %}{{ s1.axe_og }}°{% endif %}</span>
+
+            <span class="ep">
+                {% if s1.ep_pupillometre_od and s1.ep_pupillometre_og %}
+                    {{ s1.ep_pupillometre_od }}/{{ s1.ep_pupillometre_og }}
+                {% endif %}
+            </span>
+
+            <span class="obs">{{ s1.observations or '' }}</span>
+        </div>
+
+        {% if s2 %}
+        <!-- Fiche du bas -->
+        <div class="zone bottom">
+
+            <!-- Gestion École / Annexe -->
+            <span class="ecole">
+                {% if not s2.site or s2.site == s2.ecole or s2.site == 'École Principale' %}
+                    {{ s2.ecole }}
+                {% else %}
+                    {{ s2.site }} / {{ s2.ecole }}
+                {% endif %}
+            </span>
+
+            <span class="classe">{{ s2.classe or '' }}</span>
+            <span class="ville">{{ s2.ville or '' }}</span>
+
+            <span class="nom">{{ s2.nom or '' }}</span>
+            <span class="prenom">{{ s2.prenom or '' }}</span>
+            <span class="age">{% if s2.age is not none %}{{ s2.age }}{% endif %}</span>
+
+            <span class="acuite_od">{% if s2.acuite_od %}{{ s2.acuite_od }}{% endif %}</span>
+            <span class="acuite_og">{% if s2.acuite_og %}{{ s2.acuite_og }}{% endif %}</span>
+
+            <span class="sph_od">{% if s2.sph_od %}{{ s2.sph_od }}{% endif %}</span>
+            <span class="cyl_od">{% if s2.cyl_od %}{{ s2.cyl_od }}{% endif %}</span>
+            <span class="axe_od">{% if s2.axe_od %}{{ s2.axe_od }}°{% endif %}</span>
+
+            <span class="sph_og">{% if s2.sph_og %}{{ s2.sph_og }}{% endif %}</span>
+            <span class="cyl_og">{% if s2.cyl_og %}{{ s2.cyl_og }}{% endif %}</span>
+            <span class="axe_og">{% if s2.axe_og %}{{ s2.axe_og }}°{% endif %}</span>
+
+            <span class="ep">
+                {% if s2.ep_pupillometre_od and s2.ep_pupillometre_og %}
+                    {{ s2.ep_pupillometre_od }}/{{ s2.ep_pupillometre_og }}
+                {% endif %}
+            </span>
+
+            <span class="obs">{{ s2.observations or '' }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not loop.last %}
+        <div class="page-break"></div>
+    {% endif %}
+{% endfor %}
+
+</body>
+</html>

@@ -59,124 +59,27 @@
                     <div class="col-6">
                         <label class="form-label small">OD</label>
                         <select class="form-select" name="acuite_od">
-                            <option value="">--</option>
-                            {% for val in range(0, 13) %}
-                                <option value="{{ val }}" {% if student.acuite_od == val %}selected{% endif %}>{{ val }}/10</option>
-                            {% endfor %}
-                        </select>
+                                    <option value="">--</option>
+                                    {% for val in range(10, 0, -1) %}
+                                        <option value="{{ val }}" {% if student and student.acuite_od == val %}selected{% endif %}>{{ val }}/10</option>
+                                    {% endfor %}
+                                </select>
                     </div>
                     <div class="col-6">
                         <label class="form-label small">OG</label>
                         <select class="form-select" name="acuite_og">
-                            <option value="">--</option>
-                            {% for val in range(0, 13) %}
-                                <option value="{{ val }}" {% if student.acuite_og == val %}selected{% endif %}>{{ val }}/10</option>
-                            {% endfor %}
-                        </select>
+                                    <option value="">--</option>
+                                    {% for val in range(10, 0, -1) %}
+                                        <option value="{{ val }}" {% if student and student.acuite_og == val %}selected{% endif %}>{{ val }}/10</option>
+                                    {% endfor %}
+                                </select>
                     </div>
                 </div>
             </div>
         </div>
 
         
-        <!-- Lecture auto-réfractomètre (pré-prescription) -->
-        <div class="card mb-3">
-            <div class="card-header bg-info text-white">
-                <h6 class="mb-0">
-                    <i class="bi bi-bullseye me-2"></i>
-                    Lecture auto-réfractomètre (pré-prescription)
-                </h6>
-            </div>
-            <div class="card-body">
-                <p class="small text-muted mb-3">
-                    Saisir ici les valeurs brutes données par l’autoréfractomètre.
-                    L’application proposera ensuite une correction de départ
-                    que l’opticien / l’ophtalmologue pourra ajuster.
-                </p>
-
-                <!-- OD -->
-                <div class="row g-2 align-items-end mb-2">
-                    <div class="col-12">
-                        <strong>OD</strong>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Sphère (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-sph-od-mobile">
-                            <option value="">--</option>
-                            {% for val in range(-2000, 2025, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Cylindre (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-cyl-od-mobile">
-                            <option value="">--</option>
-                            {% for val in range(-600, 625, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Axe (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-axe-od-mobile">
-                            <option value="">--</option>
-                            {% for angle in range(0, 181, 5) %}
-                                <option value="{{ angle }}">{{ angle }}°</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- OG -->
-                <div class="row g-2 align-items-end mb-3">
-                    <div class="col-12">
-                        <strong>OG</strong>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Sphère (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-sph-og-mobile">
-                            <option value="">--</option>
-                            {% for val in range(-2000, 2025, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Cylindre (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-cyl-og-mobile">
-                            <option value="">--</option>
-                            {% for val in range(-600, 625, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label small">Axe (auto)</label>
-                        <select class="form-select form-select-sm" id="auto-axe-og-mobile">
-                            <option value="">--</option>
-                            {% for angle in range(0, 181, 5) %}
-                                <option value="{{ angle }}">{{ angle }}°</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <button type="button"
-                        id="btn-auto-rx-mobile"
-                        class="btn btn-outline-primary btn-sm w-100 mb-2">
-                    <i class="bi bi-magic me-1"></i>
-                    Proposer une correction à partir de l’auto-réfractomètre
-                </button>
-
-                <div id="auto-rx-info-mobile" class="alert alert-secondary small d-none mb-0"></div>
-            </div>
-        </div>
-<!-- Prescription OD -->
+        <!-- Prescription OD -->
         <div class="card mb-3">
             <div class="card-header bg-success text-white">
                 <h6 class="mb-0"><i class="bi bi-eyeglasses me-2"></i>Prescription OD</h6>
@@ -187,21 +90,29 @@
                         <label class="form-label small">Sphère</label>
                         <select class="form-select form-select-sm" name="sph_od">
                             <option value="">--</option>
+                            {% set current_sph_od = 0.0 %}
+                            {% if student and student.sph_od is not none %}
+                                {% set current_sph_od = (student.sph_od|round(2)) %}
+                            {% endif %}
                             {% for val in range(-2000, 2025, 25) %}
                                 {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}" {% if student.sph_od and (student.sph_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                <option value="{{ formatted_val }}" {% if formatted_val == current_sph_od %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-4">
                         <label class="form-label small">Cylindre</label>
                         <select class="form-select form-select-sm" name="cyl_od">
-                            <option value="">--</option>
-                            {% for val in range(-600, 625, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}" {% if student.cyl_od and (student.cyl_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
+                                    <option value="">--</option>
+                                    {% set current_cyl_od = 0.0 %}
+                                    {% if student and student.cyl_od is not none %}
+                                        {% set current_cyl_od = (student.cyl_od|round(2)) %}
+                                    {% endif %}
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if formatted_val == current_cyl_od %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
                     </div>
                     <div class="col-4">
                         <label class="form-label small">Axe</label>
@@ -227,21 +138,29 @@
                         <label class="form-label small">Sphère</label>
                         <select class="form-select form-select-sm" name="sph_og">
                             <option value="">--</option>
+                            {% set current_sph_og = 0.0 %}
+                            {% if student and student.sph_og is not none %}
+                                {% set current_sph_og = (student.sph_og|round(2)) %}
+                            {% endif %}
                             {% for val in range(-2000, 2025, 25) %}
                                 {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}" {% if student.sph_og and (student.sph_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                <option value="{{ formatted_val }}" {% if formatted_val == current_sph_og %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-4">
                         <label class="form-label small">Cylindre</label>
                         <select class="form-select form-select-sm" name="cyl_og">
-                            <option value="">--</option>
-                            {% for val in range(-600, 625, 25) %}
-                                {% set formatted_val = (val / 100)|round(2) %}
-                                <option value="{{ formatted_val }}" {% if student.cyl_og and (student.cyl_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
-                            {% endfor %}
-                        </select>
+                                    <option value="">--</option>
+                                    {% set current_cyl_og = 0.0 %}
+                                    {% if student and student.cyl_og is not none %}
+                                        {% set current_cyl_og = (student.cyl_og|round(2)) %}
+                                    {% endif %}
+                                    {% for val in range(-600, 625, 25) %}
+                                        {% set formatted_val = (val / 100)|round(2) %}
+                                        <option value="{{ formatted_val }}" {% if formatted_val == current_cyl_og %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                    {% endfor %}
+                                </select>
                     </div>
                     <div class="col-4">
                         <label class="form-label small">Axe</label>
@@ -296,7 +215,7 @@
                 <!-- Prévisualisation -->
                 {% if student.photo_monture %}
                 <div class="text-center mb-3">
-                    <img id="preview" src="/{{ student.photo_monture }}?t={{ range(1, 10000)|random }}" 
+                    <img id="preview" src="{{ student.photo_monture }}?t={{ range(1, 10000)|random }}" 
                          class="img-fluid rounded border" 
                          style="max-height: 200px;">
                 </div>
@@ -632,4 +551,101 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+<!-- Script pour prévisualisation photo -->
+<script>
+const photoInput = document.getElementById('photo-input');
+const preview = document.getElementById('preview');
+const previewContainer = document.getElementById('preview-container');
+
+if (photoInput) {
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Prévisualisation seulement
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            preview.src = event.target.result;
+            if (previewContainer) {
+                previewContainer.classList.remove('d-none');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
+</script>
+
+
+<!-- Script RAS Exclusif Bidirectionnel -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxRas = document.getElementById('pec6');
+    const autresCheckboxes = [
+        document.getElementById('pec1'),
+        document.getElementById('pec2'),
+        document.getElementById('pec3'),
+        document.getElementById('pec4'),
+        document.getElementById('pec5')
+    ];
+
+    // Si RAS est coché, désactiver les autres
+    if (checkboxRas) {
+        checkboxRas.addEventListener('change', function() {
+            if (this.checked) {
+                autresCheckboxes.forEach(cb => {
+                    if (cb) {
+                        cb.checked = false;
+                        cb.disabled = true;
+                    }
+                });
+            } else {
+                autresCheckboxes.forEach(cb => {
+                    if (cb) {
+                        cb.disabled = false;
+                    }
+                });
+            }
+        });
+    }
+
+    // Si une autre checkbox est cochée, désactiver RAS
+    autresCheckboxes.forEach(cb => {
+        if (cb) {
+            cb.addEventListener('change', function() {
+                const auMoinsUneCochee = autresCheckboxes.some(checkbox => checkbox && checkbox.checked);
+                if (auMoinsUneCochee) {
+                    if (checkboxRas) {
+                        checkboxRas.checked = false;
+                        checkboxRas.disabled = true;
+                    }
+                } else {
+                    if (checkboxRas) {
+                        checkboxRas.disabled = false;
+                    }
+                }
+            });
+        }
+    });
+
+    // Vérifier l'état initial au chargement
+    function verifierEtatInitial() {
+        if (checkboxRas && checkboxRas.checked) {
+            autresCheckboxes.forEach(cb => {
+                if (cb) {
+                    cb.disabled = true;
+                }
+            });
+        } else {
+            const auMoinsUneCochee = autresCheckboxes.some(cb => cb && cb.checked);
+            if (auMoinsUneCochee && checkboxRas) {
+                checkboxRas.disabled = true;
+            }
+        }
+    }
+
+    verifierEtatInitial();
+});
+</script>
+
 {% endblock %}

@@ -8,6 +8,7 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ville = db.Column(db.String(100), nullable=False)
     ecole = db.Column(db.String(200), nullable=False)
+    site = db.Column(db.String(100), default='École Principale')  # Nom de l'école/annexe
     classe = db.Column(db.String(50), nullable=False)
     nom = db.Column(db.String(100), nullable=False)
     prenom = db.Column(db.String(100), nullable=False)
@@ -46,13 +47,6 @@ class Student(db.Model):
 
     # Statut avec workflow détaillé
     status = db.Column(db.String(50), default='prelisted')
-    # Valeurs possibles:
-    # - prelisted: Pré-listé
-    # - chez_opticien: Chez l'opticien
-    # - chez_ophtalmo: Chez l'ophtalmologue
-    # - choix_monture: Choix de monture (magasin)
-    # - completed: Terminé (clôturé)
-
     ecole_cloturee = db.Column(db.Boolean, default=False)
     date_consultation = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -78,7 +72,7 @@ class Student(db.Model):
             'chez_opticien': 'Chez Opticien',
             'chez_ophtalmo': 'Chez Ophtalmo',
             'choix_monture': 'Choix Monture',
-            'completed': 'Terminé'
+            'completed': 'Pris en charge'
         }
         return labels.get(self.status, 'Inconnu')
 
@@ -98,6 +92,7 @@ class Student(db.Model):
             'id': self.id,
             'ville': self.ville,
             'ecole': self.ecole,
+            'site': self.site,
             'classe': self.classe,
             'nom': self.nom,
             'prenom': self.prenom,
@@ -127,7 +122,7 @@ class Student(db.Model):
         }
 
     def __repr__(self):
-        return f'<Student {self.nom} {self.prenom}>'
+        return f'<Student {self.prenom} {self.nom} - {self.site}>'
 
 
 class SessionEcole(db.Model):
@@ -182,4 +177,4 @@ class SessionEcole(db.Model):
         }
 
     def __repr__(self):
-        return f'<SessionEcole {self.ville} - {self.ecole}>'
+        return f'<SessionEcole {self.ecole} - Active: {self.is_active}>'

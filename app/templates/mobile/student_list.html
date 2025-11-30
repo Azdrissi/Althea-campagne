@@ -11,6 +11,33 @@
         </div>
     </div>
 
+    <!-- ✅ NOUVEAU : Filtre de recherche instantané -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="input-group input-group-lg">
+                <span class="input-group-text bg-primary text-white">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" 
+                       id="quick-search" 
+                       class="form-control form-control-lg" 
+                       placeholder="🔍 Tapez nom ou prénom..." 
+                       onkeyup="quickFilter()"
+                       autocomplete="off"
+                       style="font-size: 20px; padding: 15px;">
+                <button class="btn btn-outline-secondary" onclick="clearSearch()" type="button">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Résultats : <strong><span id="result-count">{{ students|length }}</span></strong> élève(s)
+                </small>
+            </div>
+        </div>
+    </div>
+
     <!-- Liste des élèves -->
     <div class="list-group">
         {% if students %}
@@ -51,4 +78,39 @@
         </a>
     </div>
 </div>
+
+<script>
+// Recherche instantanée dans la liste mobile
+function quickFilter() {
+    const input = document.getElementById('quick-search');
+    const filter = input.value.toUpperCase();
+    const listGroup = document.querySelector('.list-group');
+    const items = listGroup.getElementsByClassName('list-group-item');
+    let visibleCount = 0;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const h6 = item.querySelector('h6');
+
+        if (h6) {
+            const text = h6.textContent || h6.innerText;
+            if (text.toUpperCase().indexOf(filter) > -1) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    }
+
+    // Mettre à jour le compteur
+    document.getElementById('result-count').textContent = visibleCount;
+}
+
+function clearSearch() {
+    document.getElementById('quick-search').value = '';
+    quickFilter();
+}
+</script>
+
 {% endblock %}

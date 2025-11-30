@@ -40,6 +40,7 @@ def create_app():
     def start_session():
         ville = request.form.get('ville')
         ecole = request.form.get('ecole')
+
         if ville and ecole:
             session['session_active'] = {
                 'ville': ville,

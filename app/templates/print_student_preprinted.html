@@ -1,109 +1,135 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Fiche pré-imprimée – {{ student.nom }} {{ student.prenom }}</title>
+    <title>Fiche Althea - {{ student.nom }} {{ student.prenom }}</title>
     <style>
-        /* On travaille en millimètres, directement depuis le bord de la feuille */
         @page {
             size: A4;
             margin: 0;
         }
-
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
-            font-family: "Arial Black", "Arial Rounded MT Bold", "Arial Rounded MT", Arial, sans-serif;
-            font-size: 18px;
+            padding: 20mm;
+            font-size: 11pt;
         }
-
-        .zone {
-            position: relative;
-            width: 210mm;
-            height: 297mm;
+        .field {
+            margin-bottom: 8mm;
+            page-break-inside: avoid;
         }
-
-        /* Tous les champs imprimés : police 18, très gras */
-        .zone span {
-            font-size: 18px;
-            font-weight: 900;
-            font-family: "Arial Black", "Arial Rounded MT Bold", "Arial Rounded MT", Arial, sans-serif;
+        .field label {
+            font-weight: bold;
+            display: inline-block;
+            width: 40mm;
         }
-
-        /* Coordonnées ajustées (mm depuis le bord haut / gauche) */
-
-        /* Ligne Ecole / Classe / Ville */
-        .ecole  { position: absolute; top: 28mm; left: 24mm; }
-        .classe { position: absolute; top: 28mm; left: 120mm; }
-        .ville  { position: absolute; top: 28mm; left: 160mm; }
-
-        /* Ligne Nom / Prénom / Âge (inchangée) */
-        .nom    { position: absolute; top: 42mm; left: 35mm; }
-        .prenom { position: absolute; top: 42mm; left: 120mm; }
-        .age    { position: absolute; top: 42mm; left: 195mm; }
-
-        /* Acuité brute – valeurs OD / OG */
-        .acuite_od { position: absolute; top: 69mm; left: 65mm; }
-        .acuite_og { position: absolute; top: 69mm; left: 145mm; }
-
-        /* Nouvelle prescription (OD / OG) */
-        .sph_od { position: absolute; top: 79mm; left: 65mm; }
-        .cyl_od { position: absolute; top: 79mm; left: 90mm; }
-        .axe_od { position: absolute; top: 79mm; left: 115mm; }
-
-        .sph_og { position: absolute; top: 79mm; left: 145mm; }
-        .cyl_og { position: absolute; top: 79mm; left: 170mm; }
-        .axe_og { position: absolute; top: 79mm; left: 195mm; }
-
-        /* Ecart pupillaire / Observations */
-        .ep  { position: absolute; top: 100mm; left: 170mm; }
-        .obs { position: absolute; top: 120mm; left: 30mm; width: 150mm; }
+        .field value {
+            display: inline-block;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 10mm;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+        }
     </style>
 </head>
-<body onload="window.print()">
-<div class="zone">
-    <!-- Ecole / Classe / Ville -->
-    <span class="ecole">{{ student.ecole or '' }}</span>
-    <span class="classe">{{ student.classe or '' }}</span>
-    <span class="ville">{{ student.ville or '' }}</span>
+<body>
+    <button onclick="window.print()" style="margin-bottom: 10mm;">🖨️ Imprimer</button>
 
-    <!-- Nom / Prénom / Âge -->
-    <span class="nom">{{ student.nom or '' }}</span>
-    <span class="prenom">{{ student.prenom or '' }}</span>
-    <span class="age">{{ student.age or '' }}</span>
+    <h2>FICHE DE CONSULTATION OPHTALMOLOGIQUE</h2>
 
-    <!-- Acuité brute -->
-    <span class="acuite_od">{{ student.acuite_od or '' }}</span>
-    <span class="acuite_og">{{ student.acuite_og or '' }}</span>
+    <div class="field">
+        <label>Nom :</label>
+        <value>{{ student.nom }}</value>
+    </div>
 
-    <!-- Nouvelle prescription (OD / OG) -->
-    <span class="sph_od">
-        {% if student.sph_od is not none %}{{ '%+.2f'|format(student.sph_od) }}{% endif %}
-    </span>
-    <span class="cyl_od">
-        {% if student.cyl_od is not none %}{{ '%+.2f'|format(student.cyl_od) }}{% endif %}
-    </span>
-    <span class="axe_od">
-        {% if student.axe_od is not none %}{{ student.axe_od }}°{% endif %}
-    </span>
+    <div class="field">
+        <label>Prénom :</label>
+        <value>{{ student.prenom }}</value>
+    </div>
 
-    <span class="sph_og">
-        {% if student.sph_og is not none %}{{ '%+.2f'|format(student.sph_og) }}{% endif %}
-    </span>
-    <span class="cyl_og">
-        {% if student.cyl_og is not none %}{{ '%+.2f'|format(student.cyl_og) }}{% endif %}
-    </span>
-    <span class="axe_og">
-        {% if student.axe_og is not none %}{{ student.axe_og }}°{% endif %}
-    </span>
+    <div class="field">
+        <label>Âge :</label>
+        <value>{{ student.age }} ans</value>
+    </div>
 
-    <!-- Ecart pupillaire / Observations -->
-    <span class="ep">
-        {% if student.ep_pupillometre_od and student.ep_pupillometre_og %}
-            {{ student.ep_pupillometre_od }}/{{ student.ep_pupillometre_og }}
-        {% endif %}
-    </span>
+    <div class="field">
+        <label>Classe :</label>
+        <value>{{ student.classe }}</value>
+    </div>
 
-    <span class="obs">{{ student.observations or '' }}</span>
-</div>
+    <div class="field">
+        <label>École :</label>
+        <value>{{ student.ecole }}</value>
+    </div>
+
+    <div class="field">
+        <label>Site :</label>
+        <value>{{ student.site }}</value>
+    </div>
+
+    <hr style="margin: 10mm 0;">
+
+    <h3>ACUITÉ VISUELLE</h3>
+    <div class="field">
+        <label>Œil Droit (OD) :</label>
+        <value>{{ student.acuite_od }}/10</value>
+    </div>
+    <div class="field">
+        <label>Œil Gauche (OG) :</label>
+        <value>{{ student.acuite_og }}/10</value>
+    </div>
+
+    <hr style="margin: 10mm 0;">
+
+    <h3>PRESCRIPTION</h3>
+    <div class="field">
+        <label>OD - Sphère :</label>
+        <value>{{ student.sph_od }}</value>
+    </div>
+    <div class="field">
+        <label>OD - Cylindre :</label>
+        <value>{{ student.cyl_od }}</value>
+    </div>
+    <div class="field">
+        <label>OD - Axe :</label>
+        <value>{{ student.axe_od }}°</value>
+    </div>
+
+    <br>
+
+    <div class="field">
+        <label>OG - Sphère :</label>
+        <value>{{ student.sph_og }}</value>
+    </div>
+    <div class="field">
+        <label>OG - Cylindre :</label>
+        <value>{{ student.cyl_og }}</value>
+    </div>
+    <div class="field">
+        <label>OG - Axe :</label>
+        <value>{{ student.axe_og }}°</value>
+    </div>
+
+    <hr style="margin: 10mm 0;">
+
+    {% if student.observations %}
+    <h3>OBSERVATIONS</h3>
+    <div class="field">
+        <value>{{ student.observations }}</value>
+    </div>
+    {% endif %}
+
+    <script>
+        // Auto-print on load
+        window.onload = function() {
+            // Optionnel: lancer l'impression automatiquement
+            // window.print();
+        }
+    </script>
 </body>
 </html>

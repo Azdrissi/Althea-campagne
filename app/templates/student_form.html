@@ -90,7 +90,7 @@
 
         <!-- Ligne 2 : Bloc clinique complet (Acuité, Auto-Rx, Prescription, Écart pupillaire, Photo) -->
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-12">
                 <!-- Acuité Visuelle -->
                 <div class="card mb-3">
                     <div class="card-header bg-info text-white">
@@ -102,7 +102,7 @@
                                 <label class="form-label">OD (Œil Droit)</label>
                                 <select class="form-select" name="acuite_od">
                                     <option value="">--</option>
-                                    {% for val in range(0, 13) %}
+                                    {% for val in range(10, 0, -1) %}
                                         <option value="{{ val }}" {% if student and student.acuite_od == val %}selected{% endif %}>{{ val }}/10</option>
                                     {% endfor %}
                                 </select>
@@ -111,7 +111,7 @@
                                 <label class="form-label">OG (Œil Gauche)</label>
                                 <select class="form-select" name="acuite_og">
                                     <option value="">--</option>
-                                    {% for val in range(0, 13) %}
+                                    {% for val in range(10, 0, -1) %}
                                         <option value="{{ val }}" {% if student and student.acuite_og == val %}selected{% endif %}>{{ val }}/10</option>
                                     {% endfor %}
                                 </select>
@@ -123,105 +123,6 @@
 
 
 
-                <!-- Lecture auto-réfractomètre -->
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-bullseye me-2"></i>
-                            Lecture auto-réfractomètre (pré-prescription)
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="small text-muted mb-3">
-                            Saisir ici les valeurs brutes données par l’autoréfractomètre.
-                            L’application proposera ensuite une correction de départ
-                            que l’opticien / l’ophtalmologue pourra ajuster.
-                        </p>
-
-                        <!-- OD -->
-                        <div class="row g-2 align-items-end mb-2">
-                            <div class="col-md-12">
-                                <strong>OD</strong>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Sphère (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-sph-od-desktop">
-                                    <option value="">--</option>
-                                    {% for val in range(-2000, 2025, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Cylindre (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-cyl-od-desktop">
-                                    <option value="">--</option>
-                                    {% for val in range(-600, 625, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Axe (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-axe-od-desktop">
-                                    <option value="">--</option>
-                                    {% for angle in range(0, 181, 5) %}
-                                        <option value="{{ angle }}">{{ angle }}°</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                        <!-- OG -->
-                        <!-- OG -->
-                        <div class="row g-2 align-items-end mb-3">
-                            <div class="col-md-12">
-                                <strong>OG</strong>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Sphère (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-sph-og-desktop">
-                                    <option value="">--</option>
-                                    {% for val in range(-2000, 2025, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Cylindre (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-cyl-og-desktop">
-                                    <option value="">--</option>
-                                    {% for val in range(-600, 625, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}">{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Axe (auto)</label>
-                                <select class="form-select form-select-sm" id="auto-axe-og-desktop">
-                                    <option value="">--</option>
-                                    {% for angle in range(0, 181, 5) %}
-                                        <option value="{{ angle }}">{{ angle }}°</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="button"
-                                id="btn-auto-rx-desktop"
-                                class="btn btn-outline-primary btn-sm w-100 mb-2">
-                            <i class="bi bi-magic me-1"></i>
-                            Proposer une correction à partir de l’auto-réfractomètre
-                        </button>
-
-                        <div id="auto-rx-info-desktop" class="alert alert-secondary small d-none mb-0"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
                 <!-- Prescription OD -->
                 <div class="card mb-3">
                     <div class="card-header bg-success text-white">
@@ -232,20 +133,28 @@
                             <div class="col-md-4">
                                 <label class="form-label">Sphère</label>
                                 <select class="form-select" name="sph_od">
-                                    <option value="">--</option>
-                                    {% for val in range(-2000, 2025, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}" {% if student and student.sph_od and (student.sph_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
+                            <option value="">--</option>
+                            {% set current_sph_od = 0.0 %}
+                            {% if student and student.sph_od is not none %}
+                                {% set current_sph_od = (student.sph_od|round(2)) %}
+                            {% endif %}
+                            {% for val in range(-2000, 2025, 25) %}
+                                {% set formatted_val = (val / 100)|round(2) %}
+                                <option value="{{ formatted_val }}" {% if formatted_val == current_sph_od %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                            {% endfor %}
+                        </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Cylindre</label>
                                 <select class="form-select" name="cyl_od">
                                     <option value="">--</option>
+                                    {% set current_cyl_od = 0.0 %}
+                                    {% if student and student.cyl_od is not none %}
+                                        {% set current_cyl_od = (student.cyl_od|round(2)) %}
+                                    {% endif %}
                                     {% for val in range(-600, 625, 25) %}
                                         {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}" {% if student and student.cyl_od and (student.cyl_od|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                        <option value="{{ formatted_val }}" {% if formatted_val == current_cyl_od %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -274,20 +183,28 @@
                             <div class="col-md-4">
                                 <label class="form-label">Sphère</label>
                                 <select class="form-select" name="sph_og">
-                                    <option value="">--</option>
-                                    {% for val in range(-2000, 2025, 25) %}
-                                        {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}" {% if student and student.sph_og and (student.sph_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
-                                    {% endfor %}
-                                </select>
+                            <option value="">--</option>
+                            {% set current_sph_og = 0.0 %}
+                            {% if student and student.sph_og is not none %}
+                                {% set current_sph_og = (student.sph_og|round(2)) %}
+                            {% endif %}
+                            {% for val in range(-2000, 2025, 25) %}
+                                {% set formatted_val = (val / 100)|round(2) %}
+                                <option value="{{ formatted_val }}" {% if formatted_val == current_sph_og %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                            {% endfor %}
+                        </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Cylindre</label>
                                 <select class="form-select" name="cyl_og">
                                     <option value="">--</option>
+                                    {% set current_cyl_og = 0.0 %}
+                                    {% if student and student.cyl_og is not none %}
+                                        {% set current_cyl_og = (student.cyl_og|round(2)) %}
+                                    {% endif %}
                                     {% for val in range(-600, 625, 25) %}
                                         {% set formatted_val = (val / 100)|round(2) %}
-                                        <option value="{{ formatted_val }}" {% if student and student.cyl_og and (student.cyl_og|round(2)) == formatted_val %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
+                                        <option value="{{ formatted_val }}" {% if formatted_val == current_cyl_og %}selected{% endif %}>{{ '%+.2f'|format(formatted_val) }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -309,7 +226,7 @@
 
         <!-- Ligne 3 : Écart pupillaire vs Photo + Prise en charge -->
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-12">
 
                 <!-- Écart Pupillaire -->
                 <div class="card mb-3">
@@ -344,30 +261,67 @@
             </div>
 
             <!-- Colonne droite -->
-            <div class="col-lg-6">
+            <div class="col-12">
 
-                <!-- Photo Monture -->
-                {% if not is_new %}
+                <!-- Photo Monture avec CAPTURE WEBCAM -->
                 <div class="card mb-3">
                     <div class="card-header bg-warning text-dark">
                         <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Photo Monture</h5>
                     </div>
                     <div class="card-body">
                         {% if student.photo_monture %}
-                        <div class="text-center">
-                            <img src="/{{ student.photo_monture }}?t={{ range(1, 10000)|random }}" 
+                        <!-- Photo existante -->
+                        <div class="text-center mb-3">
+                            <img src="{{ student.photo_monture }}?t={{ range(1, 10000)|random }}" 
                                  class="img-fluid rounded border border-3" 
-                                 style="max-height: 300px;">
+                                 style="max-height: 300px"
+                                 id="current-photo">
                         </div>
                         {% else %}
-                        <div class="alert alert-warning text-center mb-0">
+                        <div class="alert alert-warning text-center mb-3" id="no-photo-alert">
                             <i class="bi bi-camera-fill fs-1"></i>
                             <p class="mb-0 mt-2">Aucune photo</p>
                         </div>
                         {% endif %}
+
+                        <!-- Boutons de capture -->
+                        <div class="row g-2">
+                            <!-- Bouton caméra/webcam -->
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-primary w-100" onclick="startCamera()">
+                                    <i class="bi bi-camera-video me-2"></i>Prendre une photo
+                                </button>
+                            </div>
+
+                            <!-- Bouton upload fichier -->
+                            <div class="col-md-6">
+                                <label class="btn btn-secondary w-100" for="photo-file-input">
+                                    <i class="bi bi-upload me-2"></i>Choisir un fichier
+                                </label>
+                                <input type="file" 
+                                       id="photo-file-input" 
+                                       accept="image/*"
+                                       capture="environment"
+                                       style="display: none;"
+                                       onchange="uploadPhotoFile(this)">
+                            </div>
+                        </div>
+
+                        <!-- Zone de capture vidéo (cachée par défaut) -->
+                        <div id="camera-container" style="display: none;" class="mt-3">
+                            <video id="camera-stream" autoplay playsinline class="w-100 rounded" style="max-width: 500px;"></video>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-success" onclick="capturePhoto()">
+                                    <i class="bi bi-camera me-2"></i>Capturer
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="stopCamera()">
+                                    <i class="bi bi-x-circle me-2"></i>Annuler
+                                </button>
+                            </div>
+                            <canvas id="photo-canvas" style="display: none;"></canvas>
+                        </div>
                     </div>
                 </div>
-                {% endif %}
 
 
             </div>
@@ -658,4 +612,108 @@ document.addEventListener('DOMContentLoaded', function() {
     verifierEtatInitial();
 });
 </script>
+
+
+<!-- Script pour la capture photo webcam -->
+<script>
+// Variables globales pour la caméra
+let cameraStream = null;
+let studentId = {{ student.id if student else 'null' }};
+
+// Démarrer la caméra/webcam
+function startCamera() {
+    const container = document.getElementById('camera-container');
+    const video = document.getElementById('camera-stream');
+
+    container.style.display = 'block';
+
+    // Demander accès à la caméra
+    navigator.mediaDevices.getUserMedia({ 
+        video: { 
+            facingMode: 'environment',  // Caméra arrière sur mobile
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        } 
+    })
+    .then(function(stream) {
+        cameraStream = stream;
+        video.srcObject = stream;
+    })
+    .catch(function(err) {
+        console.error('Erreur caméra:', err);
+        alert('Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+        container.style.display = 'none';
+    });
+}
+
+// Arrêter la caméra
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    document.getElementById('camera-container').style.display = 'none';
+}
+
+// Capturer la photo depuis la webcam
+function capturePhoto() {
+    const video = document.getElementById('camera-stream');
+    const canvas = document.getElementById('photo-canvas');
+    const context = canvas.getContext('2d');
+
+    // Définir les dimensions du canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Dessiner l'image sur le canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convertir en blob et uploader
+    canvas.toBlob(function(blob) {
+        uploadPhotoBlob(blob);
+    }, 'image/jpeg', 0.9);
+
+    // Arrêter la caméra
+    stopCamera();
+}
+
+// Upload depuis fichier
+function uploadPhotoFile(input) {
+    if (input.files && input.files[0]) {
+        uploadPhotoBlob(input.files[0]);
+    }
+}
+
+// Envoyer la photo au serveur
+function uploadPhotoBlob(blob) {
+    const formData = new FormData();
+    formData.append('photo', blob, 'photo.jpg');
+
+    // Afficher un loader
+    const cardBody = document.querySelector('.card-header.bg-warning').parentElement.querySelector('.card-body');
+    const originalContent = cardBody.innerHTML;
+    cardBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Envoi de la photo...</p></div>';
+
+    fetch(`/students/upload_photo/${studentId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recharger la page pour afficher la photo
+            location.reload();
+        } else {
+            alert('Erreur lors de l\'envoi: ' + data.error);
+            cardBody.innerHTML = originalContent;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'envoi de la photo');
+        cardBody.innerHTML = originalContent;
+    });
+}
+</script>
+
 {% endblock %}

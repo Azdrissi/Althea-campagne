@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Liste Élèves - Mobile{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <h4><i class="bi bi-people-fill me-2"></i>Liste des Élèves</h4>
+        </div>
+    </div>
+
+    <!-- Liste des élèves -->
+    <div class="list-group">
+        {% if students %}
+            {% for student in students %}
+            <a href="{{ url_for('mobile.edit_student', id=student.id) }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">{{ student.nom }} {{ student.prenom }}</h6>
+                        <small class="text-muted">
+                            {{ student.ecole }} - Classe {{ student.classe or '?' }}
+                        </small>
+                    </div>
+                    <div>
+                        {% if student.status == 'prelisted' %}
+                            <span class="badge bg-warning text-dark">Préliste</span>
+                        {% elif student.status == 'screened' %}
+                            <span class="badge bg-info">Dépisté</span>
+                        {% elif student.status == 'consulted' %}
+                            <span class="badge bg-success">Consulté</span>
+                        {% elif student.status == 'completed' %}
+                            <span class="badge bg-secondary">Complété</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>Aucun élève trouvé
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bouton retour -->
+    <div class="mt-3">
+        <a href="/" class="btn btn-secondary w-100">
+            <i class="bi bi-arrow-left me-2"></i>Retour Accueil
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiches patients – Impression groupée</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 8mm;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .page {
+            position: relative;
+            width: 100%;
+            height: 262mm;
+        }
+
+        .fiche {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            box-sizing: border-box;
+            padding: 3mm 4mm;
+        }
+
+        .fiche.top {
+            top: 0;
+        }
+
+        .fiche.bottom {
+            top: 50%;
+        }
+
+        .fiche-inner {
+            border: 1px solid #000;
+            border-radius: 2mm;
+            padding: 3mm 4mm;
+            height: calc(100% - 2mm);
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2mm;
+            margin-bottom: 2mm;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 3mm;
+        }
+
+        .logo {
+            height: 12mm;
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title-main {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .title-sub {
+            font-size: 11px;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 11px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 1mm;
+            margin-bottom: 1mm;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2mm;
+        }
+
+        td {
+            padding: 1mm 0.5mm;
+            vertical-align: middle;
+        }
+
+        .label {
+            font-weight: bold;
+            width: 24%;
+            white-space: nowrap;
+        }
+
+        .value {
+            border-bottom: 1px solid #000;
+        }
+
+        .value-short {
+            width: 18%;
+            border-bottom: 1px solid #000;
+        }
+
+        .value-very-short {
+            width: 10%;
+            border-bottom: 1px solid #000;
+            text-align: center;
+        }
+
+        .obs-block {
+            border: 1px solid #000;
+            border-radius: 2mm;
+            height: 15mm;
+            padding: 1mm;
+            font-size: 11px;
+        }
+
+        .footer {
+            margin-top: 2mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+        }
+
+        .signature-box {
+            width: 45%;
+            border-top: 1px solid #000;
+            padding-top: 1.5mm;
+            text-align: center;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+{% for i in range(0, students|length, 2) %}
+    {% set s1 = students[i] %}
+    {% set s2 = students[i + 1] if i + 1 < students|length else None %}
+
+    <div class="page">
+
+        <!-- FICHE DU HAUT -->
+        <div class="fiche top">
+            <div class="fiche-inner">
+                <div class="header">
+                    <div class="header-left">
+                        <img src="{{ url_for('static', filename='images/logo-althea.jpg') }}"
+                             alt="Fondation Althea" class="logo">
+                        <div class="title-block">
+                            <div class="title-main">Fiche patient</div>
+                            <div class="title-sub">Campagne de dépistage visuel</div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div>Ville : <strong>{{ s1.ville }}</strong></div>
+                        {% if s1.created_at %}
+                        <div>Date : {{ s1.created_at.strftime('%d/%m/%Y') }}</div>
+                        {% endif %}
+                        <div>N° : <strong>{{ s1.id }}</strong></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Informations élève</div>
+                <table>
+                    <tr>
+                        <td class="label">École / Annexe</td>
+                        <td class="value" colspan="3">
+                            {% if not s1.site or s1.site == s1.ecole or s1.site == 'École Principale' %}
+                                {{ s1.ecole }}
+                            {% else %}
+                                {{ s1.site }} / {{ s1.ecole }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Classe / Prof</td>
+                        <td class="value">{{ s1.classe or '' }}</td>
+                        <td class="label">Âge</td>
+                        <td class="value-short">
+                            {% if s1.age is not none %}{{ s1.age }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Nom</td>
+                        <td class="value">{{ s1.nom or '' }}</td>
+                        <td class="label">Prénom</td>
+                        <td class="value">{{ s1.prenom or '' }}</td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Données ophtalmologiques</div>
+                <table>
+                    <tr>
+                        <td class="label">Acuité brute</td>
+                        <td class="value-short">OD : {% if s1.acuite_od %}{{ s1.acuite_od }}{% endif %}</td>
+                        <td class="value-short">OG : {% if s1.acuite_og %}{{ s1.acuite_og }}{% endif %}</td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td class="label">Réfraction</td>
+                        <td class="value-very-short">OD</td>
+                        <td class="value-short">Sph : {% if s1.sph_od is not none %}{{ s1.sph_od }}{% endif %}</td>
+                        <td class="value-short">Cyl : {% if s1.cyl_od is not none %}{{ s1.cyl_od }}{% endif %}</td>
+                        <td class="value-short">Axe : {% if s1.axe_od is not none %}{{ s1.axe_od }}°{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td class="value-very-short">OG</td>
+                        <td class="value-short">Sph : {% if s1.sph_og is not none %}{{ s1.sph_og }}{% endif %}</td>
+                        <td class="value-short">Cyl : {% if s1.cyl_og is not none %}{{ s1.cyl_og }}{% endif %}</td>
+                        <td class="value-short">Axe : {% if s1.axe_og is not none %}{{ s1.axe_og }}°{% endif %}</td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td class="label">Écart pupillaire</td>
+                        <td class="value-short">
+                            {% if s1.ep_pupillometre_od and s1.ep_pupillometre_og %}
+                                {{ s1.ep_pupillometre_od }}/{{ s1.ep_pupillometre_og }}
+                            {% endif %}
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Observations</div>
+                <div class="obs-block">
+                    {{ s1.observations or '' }}
+                </div>
+
+                <div class="footer">
+                    <div class="signature-box">Signature opticien / réfractionniste</div>
+                    <div class="signature-box">Signature médecin ophtalmologiste</div>
+                </div>
+            </div>
+        </div>
+
+        {% if s2 %}
+        <!-- FICHE DU BAS -->
+        <div class="fiche bottom">
+            <div class="fiche-inner">
+                <div class="header">
+                    <div class="header-left">
+                        <img src="{{ url_for('static', filename='images/logo-althea.jpg') }}"
+                             alt="Fondation Althea" class="logo">
+                        <div class="title-block">
+                            <div class="title-main">Fiche patient</div>
+                            <div class="title-sub">Campagne de dépistage visuel</div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div>Ville : <strong>{{ s2.ville }}</strong></div>
+                        {% if s2.created_at %}
+                        <div>Date : {{ s2.created_at.strftime('%d/%m/%Y') }}</div>
+                        {% endif %}
+                        <div>N° : <strong>{{ s2.id }}</strong></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Informations élève</div>
+                <table>
+                    <tr>
+                        <td class="label">École / Annexe</td>
+                        <td class="value" colspan="3">
+                            {% if not s2.site or s2.site == s2.ecole or s2.site == 'École Principale' %}
+                                {{ s2.ecole }}
+                            {% else %}
+                                {{ s2.site }} / {{ s2.ecole }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Classe / Prof</td>
+                        <td class="value">{{ s2.classe or '' }}</td>
+                        <td class="label">Âge</td>
+                        <td class="value-short">
+                            {% if s2.age is not none %}{{ s2.age }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Nom</td>
+                        <td class="value">{{ s2.nom or '' }}</td>
+                        <td class="label">Prénom</td>
+                        <td class="value">{{ s2.prenom or '' }}</td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Données ophtalmologiques</div>
+                <table>
+                    <tr>
+                        <td class="label">Acuité brute</td>
+                        <td class="value-short">OD : {% if s2.acuite_od %}{{ s2.acuite_od }}{% endif %}</td>
+                        <td class="value-short">OG : {% if s2.acuite_og %}{{ s2.acuite_og }}{% endif %}</td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td class="label">Réfraction</td>
+                        <td class="value-very-short">OD</td>
+                        <td class="value-short">Sph : {% if s2.sph_od is not none %}{{ s2.sph_od }}{% endif %}</td>
+                        <td class="value-short">Cyl : {% if s2.cyl_od is not none %}{{ s2.cyl_od }}{% endif %}</td>
+                        <td class="value-short">Axe : {% if s2.axe_od is not none %}{{ s2.axe_od }}°{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td class="value-very-short">OG</td>
+                        <td class="value-short">Sph : {% if s2.sph_og is not none %}{{ s2.sph_og }}{% endif %}</td>
+                        <td class="value-short">Cyl : {% if s2.cyl_og is not none %}{{ s2.cyl_og }}{% endif %}</td>
+                        <td class="value-short">Axe : {% if s2.axe_og is not none %}{{ s2.axe_og }}°{% endif %}</td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr>
+                        <td class="label">Écart pupillaire</td>
+                        <td class="value-short">
+                            {% if s2.ep_pupillometre_od and s2.ep_pupillometre_og %}
+                                {{ s2.ep_pupillometre_od }}/{{ s2.ep_pupillometre_og }}
+                            {% endif %}
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <div class="section-title">Observations</div>
+                <div class="obs-block">
+                    {{ s2.observations or '' }}
+                </div>
+
+                <div class="footer">
+                    <div class="signature-box">Signature opticien / réfractionniste</div>
+                    <div class="signature-box">Signature médecin ophtalmologiste</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% if not loop.last %}
+        <div class="page-break"></div>
+    {% endif %}
+{% endfor %}
+
+</body>
+</html>

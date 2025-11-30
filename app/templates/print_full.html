@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche patient – {{ student.nom }} {{ student.prenom }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .page {
+            width: 190mm;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5mm;
+            margin-bottom: 5mm;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 5mm;
+        }
+
+        .logo {
+            height: 18mm;
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title-main {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .title-sub {
+            font-size: 12px;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .fiche {
+            border: 1px solid #000;
+            border-radius: 3mm;
+            padding: 5mm 6mm;
+        }
+
+        .section-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 2mm;
+            margin-bottom: 2mm;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 3mm;
+        }
+
+        td {
+            padding: 1.5mm 1mm;
+            vertical-align: middle;
+        }
+
+        .label {
+            font-weight: bold;
+            width: 22%;
+            white-space: nowrap;
+        }
+
+        .value {
+            border-bottom: 1px solid #000;
+        }
+
+        .value-short {
+            width: 18%;
+            border-bottom: 1px solid #000;
+        }
+
+        .value-very-short {
+            width: 10%;
+            border-bottom: 1px solid #000;
+            text-align: center;
+        }
+
+        .acuite-table, .refraction-table {
+            font-size: 13px;
+        }
+
+        .obs-block {
+            border: 1px solid #000;
+            border-radius: 2mm;
+            height: 25mm;
+            padding: 2mm;
+            font-size: 13px;
+        }
+
+        .footer {
+            margin-top: 6mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .signature-box {
+            width: 45%;
+            border-top: 1px solid #000;
+            padding-top: 3mm;
+            text-align: center;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+<div class="page">
+
+    <!-- ENTETE -->
+    <div class="header">
+        <div class="header-left">
+            <img src="{{ url_for('static', filename='images/logo-althea.jpg') }}"
+                 alt="Fondation Althea" class="logo">
+            <div class="title-block">
+                <div class="title-main">Fiche patient</div>
+                <div class="title-sub">Campagne de dépistage visuel</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div>Ville : <strong>{{ student.ville }}</strong></div>
+            {% if student.created_at %}
+            <div>Date : {{ student.created_at.strftime('%d/%m/%Y') }}</div>
+            {% endif %}
+            <div>N° dossier : <strong>{{ student.id }}</strong></div>
+        </div>
+    </div>
+
+    <!-- FICHE -->
+    <div class="fiche">
+
+        <!-- Infos élève -->
+        <div class="section-title">Informations élève</div>
+        <table>
+            <tr>
+                <td class="label">École / Annexe</td>
+                <td class="value" colspan="3">
+                    {% if not student.site or student.site == student.ecole or student.site == 'École Principale' %}
+                        {{ student.ecole }}
+                    {% else %}
+                        {{ student.site }} / {{ student.ecole }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Classe / Prof</td>
+                <td class="value">
+                    {{ student.classe or '' }}
+                </td>
+                <td class="label">Âge</td>
+                <td class="value-short">
+                    {% if student.age is not none %}{{ student.age }}{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Nom</td>
+                <td class="value">{{ student.nom or '' }}</td>
+                <td class="label">Prénom</td>
+                <td class="value">{{ student.prenom or '' }}</td>
+            </tr>
+        </table>
+
+        <!-- Acuité & Réfraction -->
+        <div class="section-title">Données ophtalmologiques</div>
+
+        <table class="acuite-table">
+            <tr>
+                <td class="label">Acuité brute</td>
+                <td class="value-short">OD : {% if student.acuite_od %}{{ student.acuite_od }}{% endif %}</td>
+                <td class="value-short">OG : {% if student.acuite_og %}{{ student.acuite_og }}{% endif %}</td>
+                <td></td>
+            </tr>
+        </table>
+
+        <table class="refraction-table">
+            <tr>
+                <td class="label">Réfraction</td>
+                <td class="value-very-short">OD</td>
+                <td class="value-short">Sph : {% if student.sph_od is not none %}{{ student.sph_od }}{% endif %}</td>
+                <td class="value-short">Cyl : {% if student.cyl_od is not none %}{{ student.cyl_od }}{% endif %}</td>
+                <td class="value-short">Axe : {% if student.axe_od is not none %}{{ student.axe_od }}°{% endif %}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="value-very-short">OG</td>
+                <td class="value-short">Sph : {% if student.sph_og is not none %}{{ student.sph_og }}{% endif %}</td>
+                <td class="value-short">Cyl : {% if student.cyl_og is not none %}{{ student.cyl_og }}{% endif %}</td>
+                <td class="value-short">Axe : {% if student.axe_og is not none %}{{ student.axe_og }}°{% endif %}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <td class="label">Écart pupillaire</td>
+                <td class="value-short">
+                    {% if student.ep_pupillometre_od and student.ep_pupillometre_og %}
+                        {{ student.ep_pupillometre_od }}/{{ student.ep_pupillometre_og }}
+                    {% endif %}
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Observations -->
+        <div class="section-title">Observations / Remarques</div>
+        <div class="obs-block">
+            {{ student.observations or '' }}
+        </div>
+
+        <!-- Pied (signatures) -->
+        <div class="footer">
+            <div class="signature-box">
+                Signature opticien / réfractionniste
+            </div>
+            <div class="signature-box">
+                Signature médecin ophtalmologiste
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

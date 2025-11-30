@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from app.models import Student
 from app import db
 import pandas as pd
@@ -20,6 +20,15 @@ def index():
 def import_excel():
     """Importer élèves depuis Excel/CSV"""
     try:
+        # ✅ Vérifier qu'une session école est active
+        if 'session_active' not in session:
+            flash('Veuillez d\'abord démarrer une école', 'danger')
+            return redirect(url_for('index'))
+
+        session_active = session['session_active']
+        ville = session_active['ville']
+        ecole = session_active['ecole']
+
         if 'file' not in request.files:
             flash('Aucun fichier sélectionné', 'danger')
             return redirect(url_for('imports.index'))
@@ -40,8 +49,8 @@ def import_excel():
         else:
             df = pd.read_excel(file)
 
-        # Colonnes requises
-        required_cols = ['Nom', 'Prénom', 'Ville', 'École']
+        # ✅ Colonnes requises (SANS Ville et École car on les prend de la session)
+        required_cols = ['Nom', 'Prénom']
         missing_cols = [col for col in required_cols if col not in df.columns]
 
         if missing_cols:
@@ -54,24 +63,38 @@ def import_excel():
 
         for _, row in df.iterrows():
             try:
+                # ✅ Ville et École viennent de la session active
+                # ✅ Site vient de "Nom École" dans le fichier Excel
+                site_value = row.get('Nom École', 'École Principale')
+
+                # ✅ Support "Niveau" et "Classe"
+                classe_value = row.get('Classe', row.get('Niveau', ''))
+
                 student = Student(
                     nom=row.get('Nom'),
                     prenom=row.get('Prénom'),
-                    ville=row.get('Ville'),
-                    ecole=row.get('École'),
-                    classe=row.get('Classe'),
+                    ville=ville,  # ✅ Depuis la session
+                    ecole=ecole,  # ✅ Depuis la session
+                    site=site_value,  # ✅ Depuis "Nom École" dans Excel
+                    classe=classe_value,  # ✅ Support Niveau ou Classe
                     age=row.get('Âge'),
                     status='prelisted'
                 )
+
                 db.session.add(student)
                 imported += 1
             except Exception as e:
                 errors += 1
+                print(f"Erreur import ligne {_}: {e}")
 
         db.session.commit()
 
-        flash(f'{imported} élève(s) importé(s) avec succès. {errors} erreur(s).', 'success')
-        return redirect(url_for('imports.index'))
+        if imported > 0:
+            flash(f'✅ {imported} élève(s) importé(s) avec succès ! {errors} erreur(s).', 'success')
+        else:
+            flash(f'⚠️ Aucun élève importé. {errors} erreur(s).', 'warning')
+
+        return redirect(url_for('students.list_students'))
 
     except Exception as e:
         db.session.rollback()

@@ -1,33 +1,145 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Export des élèves{% endblock %}
+{% block title %}Exports{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">
+        <i class="bi bi-download me-2"></i>
+        Exports de Données
+    </h2>
 
-            <div class="card mb-4">
+    <!-- Options d'export -->
+    <div class="row">
+        <!-- Export complet -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Export des élèves</h5>
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+                        Export Complet
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p class="mb-3">
-                        Nombre total d'élèves enregistrés : 
-                        <strong>{{ total_students }}</strong>
+                    <p class="text-muted">
+                        Exporte tous les élèves avec toutes les données 
+                        (ville, école, site, acuité, prescription, prises en charge, etc.).
                     </p>
-
-                    <p class="text-muted small">
-                        Le fichier sera généré au format <strong>Excel (.xlsx)</strong> et téléchargé automatiquement.
-                    </p>
-
-                    <a href="{{ url_for('exports.export_excel') }}" class="btn btn-success">
-                        <i class="bi bi-download me-2"></i>Exporter en Excel
+                    <a href="{{ url_for('exports.export_excel') }}" class="btn btn-primary w-100">
+                        <i class="bi bi-download me-2"></i>
+                        Télécharger Excel Complet
                     </a>
                 </div>
             </div>
-
         </div>
+
+        <!-- Export par site / annexe -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Export par Site / Annexe
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Exporte uniquement les élèves d’un site ou d’une annexe spécifique.
+                    </p>
+                    <form method="GET" action="{{ url_for('exports.export_by_site') }}">
+                        <div class="mb-3">
+                            <label for="site" class="form-label">Sélectionner un site / annexe</label>
+                            <select id="site" name="site" class="form-select" required>
+                                <option value="">-- Choisir --</option>
+                                {% for site in sites %}
+                                    <option value="{{ site }}">{{ site }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-download me-2"></i>
+                            Exporter ce Site / Annexe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Export élèves avec lunettes -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eyeglasses me-2"></i>
+                        Élèves avec Lunettes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Exporte uniquement les élèves ayant besoin de lunettes 
+                        (prescription non vide).
+                    </p>
+                    <a href="{{ url_for('exports.export_with_glasses') }}" class="btn btn-warning w-100">
+                        <i class="bi bi-download me-2"></i>
+                        Télécharger Liste Lunettes
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export élèves référés -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-hospital me-2"></i>
+                        Élèves Référés
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Exporte les élèves référés vers l’ophtalmologue, 
+                        l’orthoptiste ou pour chirurgie.
+                    </p>
+                    <a href="{{ url_for('exports.export_referred') }}" class="btn btn-danger w-100">
+                        <i class="bi bi-download me-2"></i>
+                        Télécharger Liste Référés
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export liste simple -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Liste Simple
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Liste basique : nom, prénom, classe, école 
+                        (utile pour listes de présence ou pointage).
+                    </p>
+                    <a href="{{ url_for('exports.export_simple_list') }}" class="btn btn-secondary w-100">
+                        <i class="bi bi-download me-2"></i>
+                        Télécharger Liste Simple
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton retour -->
+    <div class="mt-3">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Retour à l'accueil
+        </a>
     </div>
 </div>
 {% endblock %}

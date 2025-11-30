@@ -1,25 +1,25 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from app.models import Student, SessionEcole
 from app import db
-from werkzeug.utils import secure_filename
-import os
 from datetime import datetime
+import os
 import base64
 
 bp = Blueprint('mobile', __name__, url_prefix='/mobile')
 
+
 @bp.route('/')
 def index():
-    """Page d'accueil mobile - redirige vers la liste des élèves"""
+    """Page d'accueil mobile - redirige vers la liste des élèves."""
     return redirect(url_for('mobile.list_students'))
+
 
 @bp.route('/students')
 def list_students():
-    """Liste des élèves filtrée par école active"""
+    """Liste des élèves côté mobile, filtrée par session école active, triée par dernière mise à jour."""
     session_active = SessionEcole.get_active()
 
-    # Filtre par statut (optionnel)
-    status_filter = request.args.get('status', '')
+    status_filter = request.args.get('status', '').strip()
 
     if session_active:
         students_query = Student.query.filter_by(
@@ -29,30 +29,44 @@ def list_students():
     else:
         students_query = Student.query
 
-    # Appliquer le filtre de statut si présent
     if status_filter:
         students_query = students_query.filter_by(status=status_filter)
 
-    students = students_query.order_by(Student.classe, Student.nom, Student.prenom).all()
+    students = students_query.order_by(
+        Student.updated_at.desc().nullslast(),
+        Student.id.desc()
+    ).all()
 
-    return render_template('mobile/student_list.html', 
-                         students=students, 
-                         session_active=session_active,
-                         status_filter=status_filter)
+    return render_template(
+        'mobile/student_list.html',
+        students=students,
+        session_active=session_active,
+        status_filter=status_filter
+    )
+
 
 @bp.route('/student/<int:id>')
 def edit_student(id):
-    """Formulaire de consultation mobile"""
+    """Formulaire de consultation mobile pour un élève donné."""
     student = Student.query.get_or_404(id)
     return render_template('mobile/student_form.html', student=student)
 
+
 @bp.route('/student/<int:id>/save', methods=['POST'])
 def save_student(id):
-    """Sauvegarde des données médicales (version HTML classique)"""
+    """Sauvegarde des données médicales (version mobile)."""
     try:
         student = Student.query.get_or_404(id)
 
-        # Acuité visuelle
+        # Informations de base éventuellement modifiables
+        age = request.form.get('age', type=int)
+        if age is not None:
+            student.age = age
+        classe = request.form.get('classe')
+        if classe:
+            student.classe = classe
+
+        # Acuité visuelle (sélection 10 -> 1)
         student.acuite_od = request.form.get('acuite_od', type=float)
         student.acuite_og = request.form.get('acuite_og', type=float)
 
@@ -66,37 +80,56 @@ def save_student(id):
         student.cyl_og = request.form.get('cyl_og', type=float)
         student.axe_og = request.form.get('axe_og', type=int)
 
-        # Écart pupillaire
-        student.ecart_pupillaire = request.form.get('ecart_pupillaire', type=float)
+        # EP (20–35 mm selon les templates)
+        student.ep_pupillometre_od = request.form.get('ep_pupillometre_od', type=float)
+        student.ep_pupillometre_og = request.form.get('ep_pupillometre_og', type=float)
 
         # Observations
         student.observations = request.form.get('observations')
 
-        # Type de prise en charge
-        student.type_prise_en_charge = request.form.get('type_prise_en_charge')
+        # Prises en charge (cases à cocher)
+        prises_list = request.form.getlist('prise_en_charge')
+        if prises_list:
+            student.prise_en_charge = ",".join([p for p in prises_list if p])
+        else:
+            student.prise_en_charge = None
 
-        # Statut (optionnel)
-        status = request.form.get('status')
-        if status is not None and status != '':
-            student.status = int(status)
+        # LOGIQUE STATUT / CONSULTATION
+        has_consult_data = any([
+            student.acuite_od is not None,
+            student.acuite_og is not None,
+            student.sph_od is not None,
+            student.sph_og is not None,
+        ])
+        has_pec = bool(student.prise_en_charge)
+
+        if has_consult_data or has_pec:
+            # Passage automatique de pré-listé à pris en charge
+            if student.status == 'prelisted':
+                student.status = 'completed'
+            # Date de consultation
+            if hasattr(student, 'date_consultation'):
+                student.date_consultation = datetime.utcnow()
+
+        # Mise à jour timestamp
+        if hasattr(student, 'updated_at'):
+            student.updated_at = datetime.utcnow()
 
         db.session.commit()
-
-        # Après sauvegarde : retour à la liste des élèves mobile
         return redirect(url_for('mobile.list_students'))
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        # En cas d'erreur, on revient aussi sur la fiche avec un message dans la console
-        # (on pourrait utiliser flash si besoin)
         return redirect(url_for('mobile.edit_student', id=id))
+
+
 @bp.route('/student/<int:id>/upload_photo', methods=['POST'])
 def upload_photo(id):
-    """Upload photo depuis le smartphone"""
+    """Upload d'une photo depuis le mobile (base64), pour portrait / monture / clinique."""
     try:
         student = Student.query.get_or_404(id)
         photo_type = request.form.get('photo_type')  # portrait, monture, clinique
-        photo_data = request.form.get('photo_data')  # Base64
+        photo_data = request.form.get('photo_data')  # base64
 
         if not photo_type or photo_type not in ['portrait', 'monture', 'clinique']:
             return jsonify({'success': False, 'error': 'Type de photo invalide'}), 400
@@ -105,47 +138,46 @@ def upload_photo(id):
             return jsonify({'success': False, 'error': 'Aucune photo fournie'}), 400
 
         # Décoder le base64
-        photo_data = photo_data.split(',')[1] if ',' in photo_data else photo_data
+        if ',' in photo_data:
+            photo_data = photo_data.split(',', 1)[1]
         photo_bytes = base64.b64decode(photo_data)
 
-        # Créer le nom de fichier
+        # Construire le chemin de sauvegarde
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        photos_dir = os.path.join(base_dir, 'data', 'photos', f'{photo_type}s')
+        os.makedirs(photos_dir, exist_ok=True)
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"{student.id}_{photo_type}_{timestamp}.jpg"
+        filepath = os.path.join(photos_dir, filename)
 
-        # Chemin du dossier
-        basedir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        photo_dir = os.path.join(basedir, 'data', 'photos', f'{photo_type}s')
-        os.makedirs(photo_dir, exist_ok=True)
-
-        # Sauvegarder le fichier
-        filepath = os.path.join(photo_dir, filename)
         with open(filepath, 'wb') as f:
             f.write(photo_bytes)
 
-        # Mettre à jour la base de données
-        relative_path = f'data/photos/{photo_type}s/{filename}'
-        if photo_type == 'portrait':
-            student.photo_portrait = relative_path
-        elif photo_type == 'monture':
-            student.photo_monture = relative_path
-        elif photo_type == 'clinique':
-            student.photo_clinique = relative_path
+        # Enregistrer le chemin relatif dans la base
+        rel_path = f"data/photos/{photo_type}s/{filename}"
+        if photo_type == 'portrait' and hasattr(student, 'photo_portrait'):
+            student.photo_portrait = rel_path
+        elif photo_type == 'monture' and hasattr(student, 'photo_monture'):
+            student.photo_monture = rel_path
+        elif photo_type == 'clinique' and hasattr(student, 'photo_clinique'):
+            student.photo_clinique = rel_path
+
+        if hasattr(student, 'updated_at'):
+            student.updated_at = datetime.utcnow()
 
         db.session.commit()
 
-        return jsonify({
-            'success': True, 
-            'message': 'Photo enregistrée !',
-            'filename': filename
-        })
+        return jsonify({'success': True, 'filename': filename})
 
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
 
+
 @bp.route('/search')
 def search():
-    """Recherche rapide"""
+    """Recherche rapide pour l'interface mobile (auto-complétion)."""
     query = request.args.get('q', '').strip()
 
     if not query or len(query) < 2:
